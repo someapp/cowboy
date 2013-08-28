@@ -1,0 +1,41 @@
+%% Feel free to use, reuse and abuse the code in this file.
+
+{application, ejabberd_rest_api, [
+	{description, "Cowboy ejabberd_rest_api example."},
+	{vsn, "1"},
+	{modules, [
+		app_util, 
+		app_config_util,
+		url_route_map,
+		ejabberd_rest_api_sup,
+		ejabberd_rest_api,
+		ejabberd_rest_api_handler,
+		ejabberd_rest_api_app
+		
+	]},
+	{registered, []},
+	{applications, [
+		kernel,
+		stdlib,
+		syntax_tools,
+    	compiler,
+	    inets,
+	    ssl,
+	    public_keys,
+        crypto,
+        mnesia,
+        ranch,
+		cowboy
+	]},
+	{mod, {ejabberd_rest_api_app, []}},
+	{env, [
+  		{cluster_master, 'ejabberd@lastgejabberd302'},
+  		{table_copy_type, disc_copies},		
+  		{port, 8080},
+ 		{nb_acceptors, 5000},
+ 		{listen_interface, "eth0"},
+		{listen_ip, "127.0.0.1"},
+ 		{listen_port, 8000},
+ 		{log_dir,"log"} 
+	]}
+]}.
