@@ -51,10 +51,9 @@ stop(_State) ->
 ensure_started()->
  	reloader:start(),
     Apps = [ 
-   
-    		ssl, 
+     		crypto,
     		public_key, 
-    		crypto, 
+    		ssl, 
     		inets,
     		syntax_tools,
     		compiler,
