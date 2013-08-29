@@ -13,27 +13,27 @@
 
 start()->
 	Args = application:get_all_env(?APP),
-	start(_Type, Args).
+	start(normal, Args).
     
 
-start(_Type, Args) ->
-    ok = sensure_started(),
+start(Type, Args) ->
+    ok = ensure_started(),
     ClusterMaster = proplist:get_value(cluster_master, Args),
     Host = proplist:get_value(host, Args),
     Port = proplist:get_value(port, Args),
-    TabCopyType =  proplist:get_val(table_copy_type, Opts),
+    TabCopyType =  proplist:get_val(table_copy_type, Args),
     NumberAcceptors = proplist:get_value(nb_acceptors, Args), 
     ClusterEthInf = proplist:get_value(listen_interface, Args),	
     ClusterListenIp = proplist:get_value(listen_ip, Args),
   	ClusterListenPort = proplist:get_value(listen_port, Args),
-  	RefreshInterval = proplist:get_value(RefreshInterval, Args),
+  	RefreshInterval = proplist:get_value(refresh_interval, Args),
     Opts = [
     		{cluster_master, ClusterMaster},
     		{refresh_interval, RefreshInterval},
     		{table_copy_type, TabCopyType},
     		{listen_interface, ClusterEthInf},
     		{listen_ip, ClusterListenIp},
-    		{listen_port, ClusterListenPort},
+    		{listen_port, ClusterListenPort}
     ],
     
 	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, Opts)),

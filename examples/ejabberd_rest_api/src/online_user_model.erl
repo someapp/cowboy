@@ -1,4 +1,4 @@
--module(online_user).
+-module(online_user_model).
 -include_lib("online_user.hrl").
 -behaviour(json_rec_model).
 
@@ -11,7 +11,7 @@ new(<<"online_user">>)->
    '#new-online_user'();
 new(_)-> undefined.
 
-rec(#online_user_stat{} =Value) ->  Value;
+rec(#online_user{} =Value) ->  Value;
 rec(_)-> undefined.
 
 -spec ensure_binary(atom() | any()) -> binary().

@@ -8,12 +8,12 @@
 	 	,list_all_online/2
      	,generate_token/0]).
 
--export([ping/0]).
+
 
 -export([start/0, stop/0]).
 -export([start_link/1]).
 
--export([init/1, init/0,
+-export([init/1,
 		 handle_call/3,
 		 handle_cast/2,
 		 handle_info/2, 
@@ -30,10 +30,10 @@
 -define(ConfFile, "spark_user_presence.config").
 
 -record(state,{
-        cluster_head,
-	environment,
-	refresh_interval = -1, 
-	last_check
+        cluster_master,
+		refresh_interval = -1, 
+		environment = <<"">>,
+		last_check
 }).
 
 -record(session, {
@@ -49,27 +49,23 @@
 start_link(Args)->
   gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
    
-init()-> ok.
-%  init({?ConfPath, ?ConfFile}).
 
-init({Path, File})->
+init(Args)->
   Start = app_util:os_now(),
  
-  error_logger:info_msg("Initiating ~p with config ~p ~p", [?SERVER, Path, File]),
-  {ok, [ConfList]} = app_config_util:load_config(Path,File),
-  {ok, Interval} = app_config_util:config_val(refresh_interval, ConfList,-1),
-  {ok, Cluster} = app_config_util:config_val(cluster_head, ConfList,undefined),
-  {ok, Environment} = app_config_util:config_val(environment, ConfList,undefined),
-  ok = create_user_webpresence(),
+  error_logger:info_msg("Initiating ~p with config ~p ~p",
+  			 [?SERVER, Args]),
+  Interval = proplists:get_value(refresh_interval, Args), 
+  ClusterMaster = proplists:get_value(cluster_master, Args),
+  Environment = proplists:get_value(environment, Args),
   erlang:send_after(Interval, self(), {query_all_online}),
   erlang:send_after(Interval, self(), {list_all_online, Start}),
 
   End = app_util:os_now(),
-  error_logger:info_msg("Done Initiation ~p with config ~p ~p", [?SERVER, Path, File]),
   error_logger:info_msg("Done Initiation ~p Start ~p End ~p", [?SERVER, Start, End]),
-  {ok, #state{cluster_head = Cluster, 
-       environment = Environment,	
+  {ok, #state{cluster_master = ClusterMaster, 
        refresh_interval = Interval,
+       environment = Environment,
        last_check=End}}.
 
 start()->
@@ -77,9 +73,6 @@ start()->
 
 stop()->
  	gen_server:call(?SERVER, stop).
-
-ping()->
-	gen_server:call(?SERVER, ping).
 
 sync_session_from_cluster()->
   gen_server:call(?SERVER, sync_session_from_cluster).
@@ -119,7 +112,7 @@ handle_call({list_online_count, Since}, _From, State)->
   {ok, Reply, State};
 
 handle_call(sync_session_from_cluster, _From, State)->
-  Reply= user_presence_db:join_as_slave(State#state.cluster_head, [session]), 
+  Reply= user_presence_db:join_as_slave(State#state.cluster_master, [session]), 
   {ok, Reply, State};
 
 handle_call(ping, _From, State) ->
@@ -139,7 +132,7 @@ handle_cast(Info, State) ->
 
 handle_info({query_all_online}, State)->
   %Reply = set_user_webpresence(),
-  Cluster = State#state.cluster_head,
+  Cluster = State#state.cluster_master,
   case user_presence_db:reach_node(Cluster) of
        {ok, reachable} -> error_logger:info_msg("Cluster reachable ~p",[Cluster]),
 			 sync_with_cluster(Cluster);

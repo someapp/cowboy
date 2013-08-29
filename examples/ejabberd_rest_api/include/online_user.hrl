@@ -1,12 +1,12 @@
 -ifndef(ONLINE_USER_HRL).
 -define(ONLINE_USER_HRL, true).
--record(ONLINE_USER, {
+-record(online_user, {
 		jid ::bitstring(),
 		onlinenow  ::bitstring(),
 		time_stamp ::bitstring()
 }).
 
 
--export_records([ONLINE_USER]).
+-export_records([online_user]).
 
 -endif.

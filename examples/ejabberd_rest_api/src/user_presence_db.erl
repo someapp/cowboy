@@ -36,7 +36,7 @@
 
 -type state() :: #state{}.
 
-start_link() -> start_link([]).
+
 start_link(Args)->
   gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
 
@@ -179,9 +179,6 @@ handle_call({sync_node_some_tables, Name, Tabs}, From, State)
 handle_call({sync_node_session_table, Name}, From, State) 
 			when is_atom(Name)->
   handle_call({sync_node_some_tables, Name, [session]}, From, State);
-
-handle_call(ping, _From, State) ->
-  {reply, {ok, 'pong'}, State};
 
 handle_call(stop, _From, State) ->
    Reply = terminate(normal, State),

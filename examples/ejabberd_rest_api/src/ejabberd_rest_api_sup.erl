@@ -5,16 +5,18 @@
 -behaviour(supervisor).
 
 %% API.
--export([start_link/0]).
+-export([start_link/1]).
 
 %% supervisor.
 -export([init/1]).
 -define (SERVER, ?MODULE).
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-define(APP, 'ejabberd_rest_api').
+
+-define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, permanent, 5000, Type, [I]}).
 
 %% API.
 
--spec start_link() -> {ok, pid()}.
+-spec start_link(list()) -> {ok, pid()}.
 start_link(Args) ->
 	Args = application:get_all_env(?APP),
 	supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
@@ -25,15 +27,17 @@ init(Args) ->
 	ClusterMaster = proplists:get_value(cluster_master, Args),
 	RefreshInterval = proplists:get_value(refresh_interval, Args),
 	TableCloneType = proplists:get_value(table_clone_type, Args),
-	Opts = [ClusterMaster, ],
+	Environment = proplists:get_value(environment, Args),
+	Opt1 = [{cluster_master, ClusterMaster},
+    		{refresh_interval, RefreshInterval},
+    		{environment, Environment}
+           ],
+    Opt2 = [{cluster_master, ClusterMaster},
+  			{table_clone_type, TableCloneType}
+    	   ],
+    			
 	Children = lists:flatten([
-    	?CHILD(user_presence_srv, worker, 
-    			[{cluster_master, ClusterMaster},
-    			 {refresh_interval, RefreshInterval}	
-    			]),
-    	?CHILD(user_presence_db, worker, 
-    			[{cluster_master, ClusterMaster},
-    			 {table_clone_type, TableCloneType}
-    			])
+    	?CHILD(user_presence_srv, worker, Opt1),
+    	?CHILD(user_presence_db, worker, Opt2)
     ]),
 	{ok, {{one_for_one, 10, 10}, Children}}.

@@ -36,6 +36,7 @@
 	{mod, {ejabberd_rest_api_app, []}},
 	{env, [
   		{cluster_master, 'ejabberd@lastgejabberd302'},
+  		{environment, 'chat.stgv3.spark.net'},
   		{refresh_interval, 3000},
   		{table_clone_type, ram_copies},		
   		{port, 8080},
