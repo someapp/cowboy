@@ -28,8 +28,8 @@ start(Type, Args) ->
     NumberAcceptors =  proplists:get_value(nb_acceptors, CfgOpts), 
 
     Opts = load_config(CfgOpts),
-    
-	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, Opts)),
+   	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
+	
 	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
 		[{port, Port}], 
 		[{env, [{dispatch, Dispatch}]},
