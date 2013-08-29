@@ -21,11 +21,11 @@ start(Type, Args) ->
     
     CfgOpts = load_config_file(Args),
     
-    ClusterMaster = proplists:get_value(cluster_master, CfgOpts),
-    Host = proplists:get_value(host, CfgOpts),
-    Port = proplists:get_value(port, CfgOpts),
-    TabCopyType =  proplist:get_val(?APP, table_clone_type, CfgOpts),
-    NumberAcceptors = proplists:get_value(nb_acceptors, CfgOpts), 
+    ClusterMaster =  proplists:get_value(cluster_master, CfgOpts),
+    Host =  proplists:get_value(host, CfgOpts),
+    Port =  proplists:get_value(port, CfgOpts),
+    TabCopyType =   proplists:get_value(table_clone_type, CfgOpts),
+    NumberAcceptors =  proplists:get_value(nb_acceptors, CfgOpts), 
 
     Opts = load_config(CfgOpts),
     
@@ -65,12 +65,12 @@ load_config_file(ConfigFile)->
    ConfList.
 
 load_config(Opts)->	
-    ClusterMaster = proplists:get_value(cluster_master, Opts),
-    TabCopyType =  proplists:get_val(table_clone_type, Opts),
-    ClusterEthInf = proplists:get_value(listen_interface, Opts),	
-    ClusterListenIp = proplists:get_value(listen_ip, Opts),
-  	ClusterListenPort = proplists:get_value(listen_port, Opts),
-  	RefreshInterval = proplists:get_value(refresh_interval,Opts),
+    ClusterMaster =  proplists:get_value(cluster_master, Opts),
+    TabCopyType =   proplists:get_value(table_clone_type, Opts),
+    ClusterEthInf =  proplists:get_value(listen_interface, Opts),	
+    ClusterListenIp =  proplists:get_value(listen_ip, Opts),
+  	ClusterListenPort =  proplists:get_value(listen_port, Opts),
+  	RefreshInterval =  proplists:get_value(refresh_interval,Opts),
   	[
   	  
       {cluster_master, ClusterMaster},
