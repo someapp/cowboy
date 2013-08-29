@@ -53,7 +53,7 @@ ensure_started()->
     Apps = [ 
    
     		ssl, 
-    		public_keys, 
+    		public_key, 
     		crypto, 
     		inets,
     		syntax_tools,

@@ -27,7 +27,7 @@
     	compiler,
 	    inets,
 	    ssl,
-	    public_keys,
+	    public_key,
         crypto,
         mnesia,
         ranch,
