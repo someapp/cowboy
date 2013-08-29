@@ -6,37 +6,28 @@
 -export([start/0, start/2]).
 -export([stop/1]).
 
--define(APP, ?MODULE).
-
+-define(APP, 'ejabberd_rest_api').
+-define(CONF, "./priv/ejabberd_rest_api.config").
 
 %% API.
 
 start()->
-	start(normal, []).
+	start(normal, ?CONF).
 
-start(_Type, _Args)->
-	Args = application:get_all_env(?APP),
-	start2(normal, Args).	    
 
-start2(Type, Args) ->
+start(Type, Args) ->
+   
     ok = ensure_started(),
-    ClusterMaster = proplist:get_value(cluster_master, Args),
-    Host = proplist:get_value(host, Args),
-    Port = proplist:get_value(port, Args),
-    TabCopyType =  proplist:get_val(table_copy_type, Args),
-    NumberAcceptors = proplist:get_value(nb_acceptors, Args), 
-    ClusterEthInf = proplist:get_value(listen_interface, Args),	
-    ClusterListenIp = proplist:get_value(listen_ip, Args),
-  	ClusterListenPort = proplist:get_value(listen_port, Args),
-  	RefreshInterval = proplist:get_value(refresh_interval, Args),
-    Opts = [
-    		{cluster_master, ClusterMaster},
-    		{refresh_interval, RefreshInterval},
-    		{table_copy_type, TabCopyType},
-    		{listen_interface, ClusterEthInf},
-    		{listen_ip, ClusterListenIp},
-    		{listen_port, ClusterListenPort}
-    ],
+    
+    CfgOpts = load_config_file(Args),
+    
+    ClusterMaster = proplists:get_value(cluster_master, CfgOpts),
+    Host = proplists:get_value(host, CfgOpts),
+    Port = proplists:get_value(port, CfgOpts),
+    TabCopyType =  proplist:get_val(?APP, table_clone_type, CfgOpts),
+    NumberAcceptors = proplists:get_value(nb_acceptors, CfgOpts), 
+
+    Opts = load_config(CfgOpts),
     
 	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, Opts)),
 	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
@@ -69,6 +60,23 @@ ensure_started()->
     app_util:start_apps(Apps),
     ok.	
 
+load_config_file(ConfigFile)->
+   {ok, [ConfList]} = app_config_util:load_config_file(ConfigFile),
+   ConfList.
 
-
-	
+load_config(Opts)->	
+    ClusterMaster = proplists:get_value(cluster_master, Opts),
+    TabCopyType =  proplists:get_val(table_clone_type, Opts),
+    ClusterEthInf = proplists:get_value(listen_interface, Opts),	
+    ClusterListenIp = proplists:get_value(listen_ip, Opts),
+  	ClusterListenPort = proplists:get_value(listen_port, Opts),
+  	RefreshInterval = proplists:get_value(refresh_interval,Opts),
+  	[
+  	  
+      {cluster_master, ClusterMaster},
+      {refresh_interval, RefreshInterval},
+      {table_clone_type, TabCopyType},
+      {listen_interface, ClusterEthInf},
+      {listen_ip, ClusterListenIp},
+      {listen_port, ClusterListenPort}
+    ].	
