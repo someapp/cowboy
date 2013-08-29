@@ -14,9 +14,7 @@
 		ejabberd_online_user_handler,
 		ejabberd_online_user_set_handler,
 		ejabberd_rest_api_sup,
-		ejabberd_rest_api,
-		ejabberd_rest_api_handler,
-		ejabberd_rest_api_app
+		ejabberd_rest_api
 		
 	]},
 	{registered, []},
