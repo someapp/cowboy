@@ -27,12 +27,11 @@ onrequest_hook(Req)->
 
 
 onresponse_hook(Code, Headers, Req) ->
-    {Method, Req2} = cowboy_req:method(Req),
- 
+
+    {Method, Req2} = cowboy_req:method(Req), 
     {Path,  Req2} = cowboy_req:path(Req),
     {Params, Req2} = params_to_string(cowboy_req:qs_vals(Req)),
     {Cookies, Req2} = cowboy_req:cookies(Req),
-    {Headers, Req2} = cowboy_req:headers(Req),
     {Host, Req2} = cowboy_req:host(Req),
     {Port, Req2} = pcowboy_req:port(Req),
     error_logger:info_msg(
