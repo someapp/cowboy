@@ -7,12 +7,6 @@
 -export([stop/1]).
 
 -define(APP, ?MODULE).
--define(HANDLER, ?MODULE).
-
--define(?FORWARD1(M, F), F(X) -> M:F(X)).
--define(?FORWARD2(M, F), F(X,Y) -> M:F(X,Y)).
--define(?FORWARD3(M, F), F(X,Y,Z) -> M:F(X,Y,Z)).
-
 
 
 %% API.
@@ -44,7 +38,8 @@ start(_Type, Args) ->
 	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
 		[{port, Port}], 
 		[{env, [{dispatch, Dispatch}]},
-		{onrequest, fun ?HANDLER:debug/1}
+		{onrequest, fun cowboy_debug:onrequest_hook/1},
+		{onresponse, fun cowboy_debug:onresponse_hook/3}
 	]),
 	ejabberd_rest_api_sup:start_link(Opts).
 
@@ -71,18 +66,6 @@ ensure_started()->
     app_util:start_apps(Apps),
     ok.	
 
-debug_hook(Req)->
-	%?FORWARD2(info, "Incoming Request: ~p~n", [Req]),
-	?FORWARD2(display, Req). 
-	Req.
-	
-debug_hook(Code, Headers, Req)->
-	?FORWARD3(info, "On response: ~p~n", [Req]),
-	Req.	
 
-?FORWARD1(tty, error_logger:tty). 
-?FORWARD2(display, erlang:display). 
-?FORWARD2(warn, error_logger:warning_msg). 
-?FORWARD2(error, error_logger:error_msg). 
-?FORWARD2(info, error_logger:info_msg). 
+
 	
