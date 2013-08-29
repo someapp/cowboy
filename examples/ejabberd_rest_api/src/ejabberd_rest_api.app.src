@@ -36,7 +36,8 @@
 	{mod, {ejabberd_rest_api_app, []}},
 	{env, [
   		{cluster_master, 'ejabberd@lastgejabberd302'},
-  		{table_copy_type, disc_copies},		
+  		{refresh_interval, 3000},
+  		{table_clone_type, ram_copies},		
   		{port, 8080},
  		{nb_acceptors, 5000},
  		{listen_interface, "eth0"},

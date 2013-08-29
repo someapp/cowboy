@@ -2,7 +2,7 @@
 -behaviour(gen_server).
 
 -export([reach_node/1, 
-		 get_cluster_head/0,
+		 get_cluster_master/0,
 		 join/1, join/2,
 		 join_as_slave/0,
      	 join_as_master/1,
@@ -29,7 +29,8 @@
 -define(ConfFile, "spark_ejabberd_cluster.config").
 
 -record(state,{
-        cluster_head,
+        cluster_master,
+        type = ram_copies,
         reachable = 0
 }).
 
@@ -45,27 +46,18 @@ stop()->
  	gen_server:call(?SERVER, stop).
 
 init(Opts)->
-  error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Args]),
-  Start = app_util:os_now(),
-  {Path, File} = Args,
-  error_logger:info_msg("Initiating db ~p with config ~p ~p", [?SERVER, Path, File]),
-  {ok, [ConfList]} = app_config_util:load_config(Path,File),
-  error_logger:info_msg("~p config values ~p", [?SERVER, ConfList]),
-  {ok, Cluster} = app_config_util:config_val(cluster_head, ConfList,undefined),
-  error_logger:info_msg("~p Going to talk to ~p", [?SERVER, Cluster]),
-  {ok, #state{cluster_head = Cluster}};
-
+  error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Opts]),
   ClusterMaster = proplists:get_value(cluster_master, Opts),
+  Type = proplists:get_value(table_clone_type, Opts),
   {ok, #state{
   		cluster_master = ClusterMaster,
+  		type = Type,
   		reachable = 0
-  }};
+  }}.
 
-ping()->
-	gen_server:call(?SERVER, ping).
 
-get_cluster_head()->
-   gen_server:call(?SERVER, get_cluster_head).
+get_cluster_master()->
+   gen_server:call(?SERVER, get_cluster_master).
 
 reach_node(Name) ->
    gen_server:call(?SERVER, {reach_node, Name}).
@@ -95,8 +87,8 @@ sync_node(Name) ->
 sync_node_session(Name) ->
    gen_server:call(?SERVER, {sync_node_session, Name}).
 
-handle_call(get_cluster_head, From, State) ->
-   Reply = State#state.cluster_head,
+handle_call(get_cluster_master, From, State) ->
+   Reply = State#state.cluster_master,
    {reply, Reply, State};
 
 handle_call({reach_node, Name}, From, State) 
@@ -106,7 +98,7 @@ handle_call({reach_node, Name}, From, State)
 
 
 handle_call({join_as_slave}, From, State) ->
-   NodeName = State#state.cluster_head,
+   NodeName = State#state.cluster_master,
    {ok, reachable} = is_node_reachable(NodeName),
    Reply = prepare_sync(NodeName),
    NewState = #state{cluster_master= NodeName, 
@@ -166,7 +158,8 @@ handle_call({join_as_master, Name, Tabs}, From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
-   prepare_sync(Name),
+   Type = State#state.type,
+   prepare_sync(Name, Type),
    Reply = sync_node_some_tables(Name, Tabs),
    NewState = #state{cluster_master= Name, 
 	            reachable = State#state.reachable +1},
@@ -222,7 +215,7 @@ prepare_sync(TargetName) ->
    prepare_sync(TargetName,[schema], ?COPY_TYPE).  
 
 prepare_sync(TargetName, Type) ->
-   prepare_sync(TargetName, ?COPY_TYPE).
+   prepare_sync(TargetName, [schema], Type).
 
 prepare_sync(TargetName, Tabs, Type) -> 
   error_logger:info_msg("Stopping mnesia delete schema ~p",[TargetName, Type]),
