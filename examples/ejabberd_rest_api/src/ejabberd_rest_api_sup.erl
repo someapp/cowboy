@@ -18,7 +18,6 @@
 
 -spec start_link(list()) -> {ok, pid()}.
 start_link(Args) ->
-
 	supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
 
 %% supervisor.

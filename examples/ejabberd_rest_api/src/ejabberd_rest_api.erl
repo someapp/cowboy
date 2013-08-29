@@ -32,9 +32,10 @@ start(Type, Args) ->
 	
 	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
 		[{port, Port}], 
-		[{env, [{dispatch, Dispatch}]},
-		{onrequest, fun cowboy_debug:onrequest_hook/1},
-		{onresponse, fun cowboy_debug:onresponse_hook/3}
+		[{compress, true},
+		 {env, [{dispatch, Dispatch}]},		 
+		 {onrequest, fun error_hook_responder:onrequest_hook/1},
+		 {onresponse, fun error_hook_responder:onresponse_hook/3}
 	]),
 	ejabberd_rest_api_sup:start_link(Opts).
 
