@@ -20,6 +20,10 @@ start_link(Args) ->
 
 %% supervisor.
 
-init([]) ->
-	Children = [],
+init(Args) ->
+	
+	Children = lists:flatten([
+    	?CHILD(user_presence_srv, worker, Opts),
+    	?CHILD(user_presence_db, worker, Opts)
+    ]),
 	{ok, {{one_for_one, 10, 10}, Children}}.
