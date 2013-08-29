@@ -14,6 +14,8 @@
 		]).
 
 -export([get_resource/2]).		
+-include_lib("ejab_api.hrl").
+
 
 -record(state, {
 	cluster_head :: atom(),

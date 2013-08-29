@@ -7,6 +7,12 @@
 -export([stop/1]).
 
 -define(APP, ?MODULE).
+-define(HANDLER, ?MODULE).
+
+-define(?FORWARD1(M, F), F(X) -> M:F(X)).
+-define(?FORWARD2(M, F), F(X,Y) -> M:F(X,Y)).
+-define(?FORWARD3(M, F), F(X,Y,Z) -> M:F(X,Y,Z)).
+
 
 
 %% API.

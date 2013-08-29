@@ -20,6 +20,7 @@
 		 terminate/2, 
 		 code_change/3]).
 
+-include_lib("ejab_api.hrl").
 -include_lib("user_webpresence.hrl").
 
 -define(SERVER, ?MODULE).
