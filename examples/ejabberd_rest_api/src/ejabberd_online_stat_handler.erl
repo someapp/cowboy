@@ -20,8 +20,8 @@
 -record(state, {
 	cluster_head :: atom(),
 	table_copy_type :: atom(),
-	data_mode :: atom(),
-	method_allowed :: list(),
+	data_model :: atom(),
+	method_supported :: list(),
 	data :: binary()
 }).
 
@@ -50,21 +50,22 @@ terminate(Reason, Req, State)->
 	ok.
 
 get_resource(Req, State)->
-	case user_presence_srv:list_online(Jid) of
+    
+	case user_presence_srv:list_online() of
 		{ok, Count} -> 
 						 DataModel = State#state.data_model,
 						 Count1 = erlang:integer_to_binary(Count),
 						 encode_response(DataModel, Count1);
 						 
-		{error, Reason} -> fail(Req1, 
-								State#state{ data = <<"offline">>});
+		{error, Reason} -> fail(Req, 
+								State#state{ data = []});
 		E -> fail(Req, {error, E})
 	end.
 
 
 
 options(Req, State)->
-	Allowed = erlang:list_to_binary(State#state.method_allowed),
+	Allowed = erlang:list_to_binary(State#state.method_supported),
     cowboy_req:set_resp_header(<<"allow">>, Allowed, Req).
 	
 allowed_methods(Req, State)->	
@@ -83,10 +84,11 @@ encode_response(Encoder, Count) ->
 
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
-	fail(Req, Error);
+	fail(Req, Error, State);
 fail(Req, State = #state{data = Error}) when is_binary(Error)->
-	fail(Req, Error);	 	
-fail(Req, Error) ->
+	fail(Req, Error, State).
+		 	
+fail(Req, Error, State) ->
 	{ok, Req1} = get_response_body(Error, Req),
 	{halt, Req1, State}.
 	
@@ -98,48 +100,48 @@ get_response_meta()->
 	].
 
 get_response_body({error, badarg}, Req)->
-	get_response_body(400, <<"badarg">>, Req);
+	get_response_body(400, <<"badarg">> , Req);
 	
-get_response_body({error, no_exists} Req)->
-	get_response_body(404,<<"no_exists">>, Req);
+get_response_body({error, no_exists}, Req)->
+	get_response_body(404, <<"no_exists">> , Req);
 	
 get_response_body({error, already_exists}, Req)->
-	get_response_body(400, <<"already_exists">>, Req);
+	get_response_body(400, <<"already_exists">> , Req);
 
 get_response_body({error, mnesia_down}, Req)->
-	get_response_body(503, <<"mnesia_down">>, Req);
+	get_response_body(503, <<"mnesia_down">> , Req);
 	
 get_response_body({error, node_not_running}, Req)->
-	get_response_body(503,<<"node_not_running">>, Req);
+	get_response_body(503, <<"node_not_running">> , Req);
 
 get_response_body({error, no_transaction}, Req)->
-	get_response_body(400, <<"no_transaction">>, eq);
+	get_response_body(400, <<"no_transaction">> , Req);
 	
 get_response_body({error, combine_error}, Req)->
-	get_response_body(400, <<"combine_error">>, Req);				 	 
+	get_response_body(400, <<"combine_error">> , Req);				 	 
 
 get_response_body({error, illegal}, Req)->
-	get_response_body(405, <<"illegal">>, Req);
+	get_response_body(405, <<"illegal">> , Req);
 			
 get_response_body({error, active}, Req)->
-	get_response_body(400, <<"active">>, Req);		
+	get_response_body(400, <<"active">> , Req);		
 
 get_response_body({error, not_a_db_node}, Req)->
-	get_response_body(405, <<"not_a_db_node">>, Req);		
+	get_response_body(405, <<"not_a_db_node">> , Req);		
 
 get_response_body({error, system_limit}, Req)->
-	get_response_body(431, <<"system_limit">>, Req);
+	get_response_body(431, <<"system_limit">> , Req);
 		
 get_response_body({error, truncated_binary_file}, Req)->
-	get_response_body(500, <<"truncated_binary_file">>, Req);	
+	get_response_body(500, <<"truncated_binary_file">> , Req);	
 	
 get_response_body({error, bad_index}, Req)->
-	get_response_body(400, <<"bad_index">>, Req);
+	get_response_body(400, <<"bad_index">> , Req);
 	
 get_response_body({error, index_exists} , Req)->
-	get_response_body(400, <<"index_exists">>, Req);				 	 			 	 
+	get_response_body(400, <<"index_exists">> , Req);				 	 			 	 
 get_response_body({error, bad_type}, Req)->
-	get_response_body(400, <"bad_type">>, Req);
+	get_response_body(400, <<"bad_type">> , Req);
 
 get_response_body({error, Unknown}, Req)->
 	Unknown1 = erlang:atom_to_binary(Unknown),
@@ -148,4 +150,4 @@ get_response_body({error, Unknown}, Req)->
 get_response_body(Code, Error, Req)->
 	cowboy_req:reply(500, get_response_meta(),
 				 	 jsx:encode(Error),
-				 	 Req);					 	 
+				 	 Req).					 	 
