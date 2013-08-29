@@ -19,7 +19,7 @@
 -record(state, {
 	cluster_head :: atom(),
 	table_copy_type :: atom(),
-	data_mode :: atom(),
+	data_model :: atom(),
 	method_allowed :: list(),
 	data :: binary()
 }).
@@ -102,7 +102,7 @@ get_response_meta()->
 get_response_body({error, badarg}, Req)->
 	get_response_body(400, <<"badarg">>, Req);
 	
-get_response_body({error, no_exists} Req)->
+get_response_body({error, no_exists}, Req)->
 	get_response_body(404,<<"no_exists">>, Req);
 	
 get_response_body({error, already_exists}, Req)->
@@ -141,7 +141,7 @@ get_response_body({error, bad_index}, Req)->
 get_response_body({error, index_exists} , Req)->
 	get_response_body(400, <<"index_exists">>, Req);				 	 			 	 
 get_response_body({error, bad_type}, Req)->
-	get_response_body(400, <"bad_type">>, Req);
+	get_response_body(400, << "bad_type" >>, Req);
 
 get_response_body({error, Unknown}, Req)->
 	Unknown1 = erlang:atom_to_binary(Unknown),
