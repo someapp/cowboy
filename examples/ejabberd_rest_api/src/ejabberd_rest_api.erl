@@ -54,6 +54,7 @@ stop(_State) ->
 ensure_started()->
  	reloader:start(),
     Apps = [ 
+   
     		ssl, 
     		public_keys, 
     		crypto, 
@@ -63,6 +64,8 @@ ensure_started()->
    % 		goldrush,
     		mnesia, 
     		ranch,
+    		parse_trans,
+    		json_rec,
     		cowboy
     		],
     app_util:start_apps(Apps),
