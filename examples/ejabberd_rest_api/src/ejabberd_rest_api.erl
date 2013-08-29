@@ -12,11 +12,13 @@
 %% API.
 
 start()->
-	Args = application:get_all_env(?APP),
-	start(normal, Args).
-    
+	start(normal, []).
 
-start(Type, Args) ->
+start(_Type, _Args)->
+	Args = application:get_all_env(?APP),
+	start2(normal, Args).	    
+
+start2(Type, Args) ->
     ok = ensure_started(),
     ClusterMaster = proplist:get_value(cluster_master, Args),
     Host = proplist:get_value(host, Args),

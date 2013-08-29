@@ -19,7 +19,12 @@
 		ejabberd_rest_api
 		
 	]},
-	{registered, []},
+	{registered, [
+		ejabberd_rest_api,
+		user_presence_sup,
+		user_presence_srv
+	
+	]},
 	{applications, [
 		kernel,
 		stdlib,
