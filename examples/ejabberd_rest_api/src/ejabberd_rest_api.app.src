@@ -33,7 +33,7 @@
         ranch,
 		cowboy
 	]},
-	{mod, {ejabberd_rest_api_app, []}},
+	{mod, {ejabberd_rest_api, []}},
 	{env, [
   		{cluster_master, 'ejabberd@lastgejabberd302'},
   		{environment, 'chat.stgv3.spark.net'},
