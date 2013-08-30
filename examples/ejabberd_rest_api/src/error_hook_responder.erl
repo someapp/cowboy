@@ -37,16 +37,15 @@ error_logger:info_msg("QueryString Values: ~p~n",[QsVals]),
 
     {Bindings, Req2} = cowboy_req:bindings(Req),
 error_logger:info_msg("Bindings: ~p~n",[Bindings]),
-
-	error_logger:info_msg("~n~n Started ~p ~p ~p for ~p ~p~n
+	Msg = io_lib:format("~n~n Started ~p ~p ~p for ~p ~p~n
                   qs_vals  : ~p~n
-                  raw_qs   : ~p~n
                   bindings : ~p~n
                   cookies  : ~p~n
-                  headers  : ~p~n",
-               [Method, Path, QsVals, Host, 
-                Port, Qs, Bindings, 
+                  headers  : ~p~n" ,
+				[Method, Path, Qs, Host, 
+                Port, QsVals, Bindings, 
                 Cookies, Headers]),
+	error_logger:info_msg(Msg,[]),
 	Req.    
 
 
@@ -65,15 +64,14 @@ error_logger:info_msg("Cookies ~p~n",[Cookies]),
 error_logger:info_msg("Host ~p~n",[Host]),
     {Port, Req2} = cowboy_req:port(Req),
 error_logger:info_msg("Port ~p~n",[Port]),
-
-    error_logger:info_msg(
-      "~n~nCompleted ~p ~p ~p ~p for ~p ~p~n
-        cookies  : ~p~n
-        headers  : ~p~n", 
+    Msg = io_lib:format("~n~nCompleted ~p ~p ~p ~p for ~p ~p~n
+        				cookies  : ~p~n
+        				headers  : ~p~n", 
       				[Code, Method, 
       				 Path, QueryStringVals, 
       				 Host, Port, 
       				 Cookies, Headers]),
+    error_logger:info_msg(Msg,[]),
     Req.
 
 

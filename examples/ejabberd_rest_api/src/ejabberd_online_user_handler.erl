@@ -30,8 +30,8 @@
 
 
 init({tcp, http}, Req, Opts)->
-	ClusterHead = proplist:get_valy(cluster_head, Opts),
-	TabCopyType =  proplist:get_val(table_copy_type, Opts),
+	ClusterHead = proplists:get_value(cluster_head, Opts),
+	TabCopyType =  proplists:get_value(table_copy_type, Opts),
 	DataModel = ?DATAMODEL,
 	{upgrade, protocol, cowboy_rest, Req, 
 	 #state{
@@ -102,7 +102,7 @@ get_response_meta()->
 	[
 		{<<"content-type">>, <<"application/json; charset=UTF-8">>},
 		{<<"cache-control">>, <<"no-store">>},
-		{<<pragma>>, <<"no-cache">>}
+		{<<"pragma">>, <<"no-cache">>}
 	].
 
 get_response_body({error, badarg}, Req)->
