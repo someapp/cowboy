@@ -26,6 +26,7 @@
 }).
 
 -define(DATAMODEL, 'online_stat').
+-define(HANDLER, ?MODULE).
 
 init({tcp, http}, Req, Opts)->
 	ClusterHead = proplists:get_value(cluster_head, Opts),
@@ -41,9 +42,13 @@ init({tcp, http}, Req, Opts)->
 	}}.
 
 rest_init(Req, State)->
+    error_logger:info_msg("~p rest_init Req Method ~p~n",
+    			[?HANDLER, cowboy_req:method(Req)]),
 	{ok, Req, State}.
 
 rest_terminate(Req, State)->
+    error_logger:info_msg("~p rest_terminate Req Method ~p~n",
+    			[?HANDLER, cowboy_req:method(Req)]),
 	ok.
 
 terminate(Reason, Req, State)->
@@ -72,11 +77,11 @@ allowed_methods(Req, State)->
 	{[<<"GET">>], Req, State}.
 	
 known_methods(Req, State)->
- 	{State#state.method_supported}.
+ 	{State#state.method_supported, Req, State}.
 
 content_types_provided(Req, State) ->
 	{[ 
-		{{<<"application">>, <<"json">>, []}, to_json}
+		{{<<"application">>, <<"json">>, []}, get_resource}
 	], Req, State}.	
 
 encode_response(Encoder, Count) ->

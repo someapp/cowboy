@@ -69,7 +69,7 @@ allowed_methods(Req, State)->
 	{[<<"GET">>], Req, State}.
 	
 known_methods(Req, State)->
- 	{State#state.method_supported}.
+ 	{State#state.method_supported, Req, State}.
 
 content_types_provided(Req, State) ->
 	{[ 
