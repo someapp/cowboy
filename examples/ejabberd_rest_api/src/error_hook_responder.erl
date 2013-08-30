@@ -7,17 +7,36 @@
 -export([respond/4]).
 
 onrequest_hook(Req)->
+
     {Method, Req2} = cowboy_req:method(Req),
+error_logger:info_msg("Method: ~p~n",[Method]),
+
     {Version, Req2} = cowboy_req:version(Req),
+error_logger:info_msg("Version: ~p~n",[Version]),
+
     {Host, Req2} = cowboy_req:host(Req),
+error_logger:info_msg("Host: ~p~n",[Host]),
+
     {Port, Req2} = cowboy_req:port(Req),
-    {Cookies, Req2} = cowboy_req:cookies(Req),
+error_logger:info_msg("Port: ~p~n",[Port]),
+
+    {Cookies, Req3} = cowboy_req:cookies(Req),
+error_logger:info_msg("Cookies: ~p~n",[lists:flatten(Cookies)]),
+
     {Headers, Req2} = cowboy_req:headers(Req),
+error_logger:info_msg("Headers: ~p~n",[Headers]),
+
     {Qs, Req2} = cowboy_req:qs(Req),
-    {QsVals, Req2} = params_to_string(cowboy_req:qs_vals(Req)),
+error_logger:info_msg("QueryString: ~p~n",[Qs]),
+
+    {QsVals, Req4} = params_to_string(cowboy_req:qs_vals(Req)),
+error_logger:info_msg("QueryString Values: ~p~n",[QsVals]),
+
     {Bindings, Req2} = cowboy_req:bindings(Req),
+error_logger:info_msg("Bindings: ~p~n",[Bindings]),
+
     {Path, Req2} = cowboy_req:path(Req),
-	error_logger:info_msg("~n~nStarted " ++ Method ++ " " ++ Path ++ QsVals ++ " for " ++ Host ++ Port ++ "~n"
+	error_logger:info_msg_msg("~n~nStarted " ++ Method ++ " " ++ Path ++ QsVals ++ " for " ++ Host ++ Port ++ "~n"
                "  qs_vals  : " ++ to_native_string(QsVals) ++ "~n"
                "  raw_qs   : " ++ to_native_string(Qs) ++ "~n"
                "  bindings : " ++ to_native_string(Bindings) ++ "~n"
@@ -27,15 +46,25 @@ onrequest_hook(Req)->
 
 
 onresponse_hook(Code, Headers, Req) ->
-
+error_logger:info_msg("1",[]),
+	
     {Method, Req2} = cowboy_req:method(Req), 
-    {Path,  Req2} = cowboy_req:path(Req),
-    {Params, Req2} = params_to_string(cowboy_req:qs_vals(Req)),
-    {Cookies, Req2} = cowboy_req:cookies(Req),
+error_logger:info_msg("Method ~p~n",[Method]),
+      {Path,  Req2} = cowboy_req:path(Req),
+error_logger:info_msg("Path ~p~n",[Path]),
+    {QueryStringVals, Req3} = params_to_string(cowboy_req:qs_vals(Req)),
+error_logger:info_msg("QueryString Values ~p~n",[QueryStringVals]),
+    {Cookies, Req4} = cowboy_req:cookies(Req),
+error_logger:info_msg("Cookies ~p~n",[Cookies]),
+
     {Host, Req2} = cowboy_req:host(Req),
-    {Port, Req2} = pcowboy_req:port(Req),
-    error_logger:info_msg(
-      "~n~nCompleted " ++ to_string(Code) ++ " " ++ Method ++ " " ++ Path ++ Params ++ " for " ++ Host ++ Port ++ "~n"
+
+error_logger:info_msg("Host ~p~n",[Host]),
+    {Port, Req2} = cowboy_req:port(Req),
+error_logger:info_msg("Port ~p~n",[Port]),
+
+    error_logger:info_msg_msg(
+      "~n~nCompleted " ++ to_string(Code) ++ " " ++ Method ++ " " ++ Path ++ QueryStringVals ++ " for " ++ Host ++ Port ++ "~n"
       "  cookies  : " ++ to_native_string(Cookies) ++ "~n"
       "  headers  : " ++ to_native_string(Headers)),
     Req.
