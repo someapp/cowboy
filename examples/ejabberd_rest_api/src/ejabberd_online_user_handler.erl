@@ -53,7 +53,8 @@ terminate(Reason, Req, State)->
 	
 get_resource(Req, State)->
 	{Jid, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
-	case user_presence_srv:list_online(Jid) of
+	Jid0 = app_util:to_integer(Jid),
+	case user_presence_srv:list_online(Jid0) of
 		{ok, online} -> 
 						 DataModel = State#state.data_model,
 						 encode_response(DataModel, Jid, <<"online">>);

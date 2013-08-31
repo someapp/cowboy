@@ -11,6 +11,7 @@
 
 -export([config_val/3]).
 
+-export([to_integer/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -84,7 +85,12 @@ ensure_loaded(Mod) when is_atom(Mod)->
   end;
 ensure_loaded(_) -> {error, badarg}.
 
-
+to_integer(A) when is_integer(A) -> A;
+to_integer(A) when is_binary(A)-> 
+	list_to_integer(binary_to_list(A));
+to_integer(A)->
+	error_logger:error_msg("~p:to_integer: ~p wrong type~n",[A]),
+	A.
 
 %% ===================================================================
 %% EUnit tests

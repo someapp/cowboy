@@ -49,7 +49,12 @@ terminate(Reason, Req, State)->
 	ok.
 
 get_resource(Req, State)->
-	case user_presence_srv:list_online() of
+    Now = erlang:now(),
+	Sec = calendar:time_to_seconds(Now),
+	{Since,_} = cowboy_req:qs_val(<<"since">>, 
+					Req, Sec),
+	Since0 = app_util:to_integer(Since),
+	case user_presence_srv:list_online(Since0) of
 		{ok, Collection} ->
 						 DataModel = State#state.data_model,
 						 encode_response(DataModel, Collection);
