@@ -81,6 +81,7 @@ list_online(UserId) ->
 	gen_server:call(?SERVER,{list_online, UserId}).
 
 list_all_online(Since) ->
+    
 	list_all_online(call, Since).
 
 list_all_online(Type, Since) when is_function(Type) ->

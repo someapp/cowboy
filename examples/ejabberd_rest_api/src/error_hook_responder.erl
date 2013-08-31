@@ -7,36 +7,16 @@
 -export([respond/4]).
 
 onrequest_hook(Req)->
-
     {Method, Req2} = cowboy_req:method(Req),
-error_logger:info_msg("Method: ~p~n",[Method]),
-
     {Version, Req2} = cowboy_req:version(Req),
-error_logger:info_msg("Version: ~p~n",[Version]),
-
     {Host, Req2} = cowboy_req:host(Req),
-error_logger:info_msg("Host: ~p~n",[Host]),
-
     {Port, Req2} = cowboy_req:port(Req),
-error_logger:info_msg("Port: ~p~n",[Port]),
-
     {Cookies, Req3} = cowboy_req:cookies(Req),
-error_logger:info_msg("Cookies: ~p~n",[lists:flatten(Cookies)]),
-
     {Headers, Req2} = cowboy_req:headers(Req),
-error_logger:info_msg("Headers: ~p~n",[Headers]),
-
     {Qs, Req2} = cowboy_req:qs(Req),
-error_logger:info_msg("QueryString: ~p~n",[Qs]),
-
     {Path, Req2} = cowboy_req:path(Req),
-error_logger:info_msg("Path: ~p~n",[Path]),
-
     {QsVals, Req4} = cowboy_req:qs_vals(Req),
-error_logger:info_msg("QueryString Values: ~p~n",[QsVals]),
-
     {Bindings, Req2} = cowboy_req:bindings(Req),
-error_logger:info_msg("Bindings: ~p~n",[Bindings]),
 	Msg = io_lib:format("~n~n Started ~p ~p ~p for ~p ~p~n
                   qs_vals  : ~p~n
                   bindings : ~p~n
@@ -51,20 +31,12 @@ error_logger:info_msg("Bindings: ~p~n",[Bindings]),
 
 onresponse_hook(Code, Headers, Req) ->
     {Method, Req2} = cowboy_req:method(Req), 
-error_logger:info_msg("Method ~p~n",[Method]),
     {Path,  Req2} = cowboy_req:path(Req),
-error_logger:info_msg("Path ~p~n",[Path]),
     {QueryStringVals, Req3} = cowboy_req:qs_vals(Req),
-error_logger:info_msg("QueryString Values ~p~n",[QueryStringVals]),
     {Cookies, Req4} = cowboy_req:cookies(Req),
-error_logger:info_msg("Cookies ~p~n",[Cookies]),
-
     {Host, Req2} = cowboy_req:host(Req),
-
-error_logger:info_msg("Host ~p~n",[Host]),
     {Port, Req2} = cowboy_req:port(Req),
-error_logger:info_msg("Port ~p~n",[Port]),
-    Msg = io_lib:format("~n~nCompleted ~p ~p ~p ~p for ~p ~p~n
+    Msg = io_lib:format("~n~n Completed ~p ~p ~p ~p for ~p ~p~n
         				cookies  : ~p~n
         				headers  : ~p~n", 
       				[Code, Method, 

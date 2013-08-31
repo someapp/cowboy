@@ -55,8 +55,14 @@ terminate(Reason, Req, State)->
 	ok.
 
 get_resource(Req, State)->
-    
-	case user_presence_srv:list_online() of
+	Now = erlang:now(),
+	Sec = calendar:time_to_seconds(Now),
+	Since = cowboy_req:qs_val(<<"since">>, 
+					Req, Sec),
+	Since0 = to_integer(Since),
+%	error_logger:info_msg("~p:get_resource: ~p~n", [?MODULE, Since0]),
+	
+   	case user_presence_srv:list_online_count(Since0) of
 		{ok, Count} -> 
 						 DataModel = State#state.data_model,
 						 Count1 = erlang:integer_to_binary(Count),
@@ -156,3 +162,7 @@ get_response_body(Code, Error, Req)->
 	cowboy_req:reply(500, get_response_meta(),
 				 	 jsx:encode(Error),
 				 	 Req).					 	 
+
+to_integer(A) when is_integer(A) -> A;
+to_integer(A) when is_binary(A)-> 
+	list_to_integer(binary_to_list(A)).
