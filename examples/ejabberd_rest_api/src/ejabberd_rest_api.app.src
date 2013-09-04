@@ -36,6 +36,8 @@
 	    ssl,
 	    public_key,
         crypto,
+        sasl,
+        net_adm,
         mnesia,
         ranch,
 		cowboy
