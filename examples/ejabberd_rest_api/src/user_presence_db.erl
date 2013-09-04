@@ -38,8 +38,10 @@
 
 
 start_link(Args)->
+  error_logger:info_msg("[~p] Start link with Args: ~p~n ",
+  			 [?SERVER, Args]),
   gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
-
+  
 start(Args) -> start_link(Args).
 
 stop()->

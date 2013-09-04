@@ -11,7 +11,7 @@ export DEPS_DIR
 # Makefile tweaks.
 
 V ?= 0
-
+erl_vsn = @echo "Erlang version: (requires at least 5.9)" `erl -v `
 appsrc_verbose_0 = @echo " APP   " $(PROJECT).app.src;
 appsrc_verbose = $(appsrc_verbose_$(V))
 
@@ -25,7 +25,7 @@ gen_verbose = $(gen_verbose_$(V))
 
 # Application.
 
-all: deps app
+all: erlvsn deps app
 
 clean-all: clean clean-deps clean-docs
 	$(gen_verbose) rm -rf .$(PROJECT).plt $(DEPS_DIR) logs

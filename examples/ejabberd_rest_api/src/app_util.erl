@@ -85,6 +85,7 @@ ensure_loaded(Mod) when is_atom(Mod)->
   end;
 ensure_loaded(_) -> {error, badarg}.
 
+-spec to_integer(any()) -> integer() | {error, term()}.
 to_integer(A) when is_integer(A) -> A;
 to_integer(A) when is_binary(A)-> 
 	list_to_integer(binary_to_list(A));

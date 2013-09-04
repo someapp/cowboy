@@ -8,14 +8,15 @@
 
 -define(APP, 'ejabberd_rest_api').
 -define(CONF, "./priv/ejabberd_rest_api.config").
+-define(STARTYPE, permanent).
 
 %% API.
 
 start()->
-	start(normal, ?CONF).
+	start(?STARTYPE, ?CONF).
 
 
-start(Type, Args) ->
+start(_Type, Args) ->
    
     ok = ensure_started(),
     
@@ -37,6 +38,7 @@ start(Type, Args) ->
 		 {onrequest, fun error_hook_responder:onrequest_hook/1},
 		 {onresponse, fun error_hook_responder:onresponse_hook/3}
 	]),
+	
 	ejabberd_rest_api_sup:start_link(Opts).
 
 stop(_State) ->

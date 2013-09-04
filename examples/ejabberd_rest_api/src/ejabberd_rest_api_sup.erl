@@ -18,10 +18,12 @@
 
 -spec start_link(list()) -> {ok, pid()}.
 start_link(Args) ->
+    error_logger:info_msg("Start link ~p ~p~n",
+    			[?SERVER, lists:flatten(Args)]),
 	supervisor:start_link({local, ?SERVER}, ?MODULE, Args).
 
 %% supervisor.
-
+-spec init(list()) -> {ok, pid()}.
 init(Args) ->
 	ClusterMaster = proplists:get_value(cluster_master, Args),
 	RefreshInterval = proplists:get_value(refresh_interval, Args),
@@ -36,7 +38,13 @@ init(Args) ->
     	   ],
     			
 	Children = lists:flatten([
-    	?CHILD(user_presence_srv, worker, Opt1),
-    	?CHILD(user_presence_db, worker, Opt2)
+    	?CHILD(user_presence_srv, worker, [Opt1]),
+    	?CHILD(user_presence_db, worker, [Opt2])
     ]),
+	error_logger:info_msg("Initiating sub applications: ~p ~p~n",
+			[user_presence_srv, user_presence_db]),
+	error_logger:info_msg("~p: with Option: ~p~n",
+			[user_presence_srv, lists:flatten(Opt1)]),		
+	error_logger:info_msg("~p: with Option: ~p~n",
+			[user_presence_db, lists:flatten(Opt2)]),
 	{ok, {{one_for_one, 10, 10}, Children}}.

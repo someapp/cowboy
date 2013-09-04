@@ -8,9 +8,8 @@
 	 	,list_all_online/2
      	,generate_token/0]).
 
+-export([sync_session_from_cluster/0]).
 
-
--export([start/0, stop/0]).
 -export([start_link/1]).
 
 -export([init/1,
@@ -47,13 +46,14 @@
 -type state() :: #state{}.
 
 start_link(Args)->
+  error_logger:info_msg("Start_link ~p with Args ~p~n",
+  			 [?SERVER, Args]),
   gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
    
 
 init(Args)->
   Start = app_util:os_now(),
- 
-  error_logger:info_msg("Initiating ~p with config ~p ~p",
+  error_logger:info_msg("Initiating ~p with config ~p ~n",
   			 [?SERVER, Args]),
   Interval = proplists:get_value(refresh_interval, Args), 
   ClusterMaster = proplists:get_value(cluster_master, Args),
@@ -62,7 +62,8 @@ init(Args)->
   erlang:send_after(Interval, self(), {list_all_online, Start}),
 
   End = app_util:os_now(),
-  error_logger:info_msg("Done Initiation ~p Start ~p End ~p", [?SERVER, Start, End]),
+  error_logger:info_msg("Done Initiation ~p Start ~p End ~p", 
+  			 [?SERVER, Start, End]),
   {ok, #state{cluster_master = ClusterMaster, 
        refresh_interval = Interval,
        environment = Environment,
