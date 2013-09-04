@@ -12,7 +12,7 @@
 -define (SERVER, ?MODULE).
 -define(APP, 'ejabberd_rest_api').
 
--define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, temporary, 5000, Type, [I]}).
+-define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, permanent, 5000, Type, [I]}).
 
 %% API.
 
@@ -38,6 +38,7 @@ init(Args) ->
     	   ],
     			
 	Children = lists:flatten([
+	%	?CHILD(mychild_server, worker, [Opt1])
     	?CHILD(user_presence_srv, worker, [Opt1]),
     	?CHILD(user_presence_db, worker, [Opt2])
     ]),

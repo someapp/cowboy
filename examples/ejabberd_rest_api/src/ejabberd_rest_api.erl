@@ -31,15 +31,18 @@ start(_Type, Args) ->
     Opts = load_config(CfgOpts),
    	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
 	
-	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
-		[{port, Port}], 
-		[{compress, true},
-		 {env, [{dispatch, Dispatch}]},		 
-		 {onrequest, fun error_hook_responder:onrequest_hook/1},
+   	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
+   		[{port, Port}], 
+   		[{compress, true},
+   		 {env, [{dispatch, Dispatch}]},		 
+   		 {onrequest, fun error_hook_responder:onrequest_hook/1},
 		 {onresponse, fun error_hook_responder:onresponse_hook/3}
-	]),
+    ]),
 	
-	ejabberd_rest_api_sup:start_link(Opts).
+	R = ejabberd_rest_api_sup:start_link(Opts),
+	error_logger:info_msg("Start ejabberd api status: ~p~n",
+				 [R]),
+	R.
 
 stop(_State) ->
 	ok.
@@ -56,9 +59,9 @@ ensure_started()->
     		compiler,
    % 		goldrush,
     		mnesia, 
-    		ranch,
     		parse_trans,
     		json_rec,
+    		ranch,
     		cowboy
     		],
     app_util:start_apps(Apps),
@@ -77,7 +80,6 @@ load_config(Opts)->
   	ClusterListenPort =  proplists:get_value(listen_port, Opts),
   	RefreshInterval =  proplists:get_value(refresh_interval,Opts),
   	[
-  	  
 	  {environment, Environment},
       {cluster_master, ClusterMaster},
       {refresh_interval, RefreshInterval},
