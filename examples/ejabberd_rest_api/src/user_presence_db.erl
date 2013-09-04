@@ -55,13 +55,14 @@ init(Opts)->
   error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Opts]),
   ClusterMaster = proplists:get_value(cluster_master, Opts),
   Type = proplists:get_value(table_clone_type, Opts),
-  error_logger:info_msg("Done Initiation ~p ClusterMaster ~p Type ~p", 
+  error_logger:info_msg("Done Initiation ~p ClusterMaster ~p Type ~p~n", 
   			 [?SERVER, ClusterMaster, Type]),
-  {ok, #state{
+  State = #state{
   		cluster_master = ClusterMaster,
   		type = Type,
-  		reachable = 0
-  }}.
+  		reachable = 0},
+  error_logger:info_msg("what happened? ~n",[]),
+  {ok, State}.
 
 
 get_cluster_master()->
@@ -202,7 +203,7 @@ handle_cast(Info, State) ->
 
 -spec handle_info(tuple(), state()) -> {ok, state()}.
 handle_info(_Info, State) ->
-   {ok, State}.
+   {noreply, State}.
 
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
 handle_info(stop, _From, State)->
