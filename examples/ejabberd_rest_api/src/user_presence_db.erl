@@ -40,17 +40,23 @@
 start_link(Args)->
   error_logger:info_msg("[~p] Start link with Args: ~p~n ",
   			 [?SERVER, Args]),
-  gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
+  R = gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]),
+  error_logger:info_msg("~p started with pid ~p~n",[?SERVER, R]),
+  R.
   
-start(Args) -> start_link(Args).
+start(Args) -> 
+	start_link(Args).
 
 stop()->
  	gen_server:call(?SERVER, stop).
 
 init(Opts)->
+  process_flag(trap_exit, true),
   error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Opts]),
   ClusterMaster = proplists:get_value(cluster_master, Opts),
   Type = proplists:get_value(table_clone_type, Opts),
+  error_logger:info_msg("Done Initiation ~p ClusterMaster ~p Type ~p", 
+  			 [?SERVER, ClusterMaster, Type]),
   {ok, #state{
   		cluster_master = ClusterMaster,
   		type = Type,

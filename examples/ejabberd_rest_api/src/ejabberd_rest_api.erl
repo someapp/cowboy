@@ -68,6 +68,7 @@ load_config_file(ConfigFile)->
    ConfList.
 
 load_config(Opts)->	
+    Environment = proplists:get_value(environment, Opts),
     ClusterMaster =  proplists:get_value(cluster_master, Opts),
     TabCopyType =   proplists:get_value(table_clone_type, Opts),
     ClusterEthInf =  proplists:get_value(listen_interface, Opts),	
@@ -76,6 +77,7 @@ load_config(Opts)->
   	RefreshInterval =  proplists:get_value(refresh_interval,Opts),
   	[
   	  
+	  {environment, Environment},
       {cluster_master, ClusterMaster},
       {refresh_interval, RefreshInterval},
       {table_clone_type, TabCopyType},

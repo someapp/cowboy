@@ -48,10 +48,12 @@
 start_link(Args)->
   error_logger:info_msg("Start_link ~p with Args ~p~n",
   			 [?SERVER, Args]),
-  gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]).
-   
+  R = gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]),
+  error_logger:info_msg("~p started with pid ~p~n",[?SERVER, R]),
+  R.   
 
 init(Args)->
+  process_flag(trap_exit,true),
   Start = app_util:os_now(),
   error_logger:info_msg("Initiating ~p with config ~p ~n",
   			 [?SERVER, Args]),
