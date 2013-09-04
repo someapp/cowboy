@@ -51,17 +51,18 @@ stop()->
  	gen_server:call(?SERVER, stop).
 
 init(Opts)->
-  process_flag(trap_exit, true),
+  %process_flag(trap_exit, true),
   error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Opts]),
   ClusterMaster = proplists:get_value(cluster_master, Opts),
   Type = proplists:get_value(table_clone_type, Opts),
   error_logger:info_msg("Done Initiation ~p ClusterMaster ~p Type ~p~n", 
   			 [?SERVER, ClusterMaster, Type]),
-  State = #state{
+	
+  {ok , #state{
   		cluster_master = ClusterMaster,
   		type = Type,
-  		reachable = 0},
-  {ok, State}.
+  		reachable = 0}
+  }.
 
 
 get_cluster_master()->
@@ -198,14 +199,16 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(Info, State) ->
    erlang:display(Info),
+   error_logger:info_msg("Unknown Cast message ~p~n",[Info]),
    {noreply, State}.
 
 -spec handle_info(tuple(), state()) -> {ok, state()}.
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+   error_logger:info_msg("Unknown Info message ~p~n",[Info]),
    {noreply, State}.
 
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
-handle_info(stop, _From, State)->
+handle_info(stop, From, State)->
    terminate(normal, State).
 
 -spec terminate(atom(), state()) -> ok.

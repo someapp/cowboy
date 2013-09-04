@@ -51,6 +51,7 @@ ensure_started()->
     		public_key, 
     		ssl, 
     		inets,
+    		sasl,
     		syntax_tools,
     		compiler,
    % 		goldrush,

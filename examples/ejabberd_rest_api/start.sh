@@ -16,7 +16,7 @@ ERL="/opt/otp_src_R15B03/bin/erl"
 #DBG=erlexec
 HERE=`which "$0" 2>/dev/null || echo .`
 BASE=`dirname $HERE`
-NODE=`hostname -f`
+NODE=`hostname -s`
 NAME=socialstream@${NODE}
 COOKIE=CFHJKHWHACWYZQPBDHWS
 ROOTDIR=`cd $BASE; pwd`
@@ -43,9 +43,8 @@ start()
    
     erl -setcookie ${COOKIE} \
     	 ${ERLANG_OPTS} \
-    	-name ${NAME} \
+    	-sname ${NAME} \
     	-pa ebin deps/*/ebin \
-    	-boot start_sasl \
     	-s ejabberd_rest_api start -a -b 
     #	\
     #	-sasl sasl_error_logger \{file,\"$SASL_LOG_PATH\"\}

@@ -12,7 +12,7 @@
 -define (SERVER, ?MODULE).
 -define(APP, 'ejabberd_rest_api').
 
--define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, permanent, 5000, Type, [I]}).
+-define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, temporary, 5000, Type, [I]}).
 
 %% API.
 

@@ -53,15 +53,15 @@ start_link(Args)->
   R.   
 
 init(Args)->
-  process_flag(trap_exit,true),
+  %process_flag(trap_exit,true),
   Start = app_util:os_now(),
   error_logger:info_msg("Initiating ~p with config ~p ~n",
   			 [?SERVER, Args]),
   Interval = proplists:get_value(refresh_interval, Args), 
   ClusterMaster = proplists:get_value(cluster_master, Args),
   Environment = proplists:get_value(environment, Args),
-  erlang:send_after(Interval, self(), {query_all_online}),
-  erlang:send_after(Interval, self(), {list_all_online, Start}),
+ % erlang:send_after(Interval, self(), {query_all_online}),
+ % erlang:send_after(Interval, self(), {list_all_online, Start}),
 
   End = app_util:os_now(),
   error_logger:info_msg("Done Initiation ~p Start ~p End ~p", 
