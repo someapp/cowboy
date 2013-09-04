@@ -61,7 +61,6 @@ init(Opts)->
   		cluster_master = ClusterMaster,
   		type = Type,
   		reachable = 0},
-  error_logger:info_msg("what happened? ~n",[]),
   {ok, State}.
 
 
