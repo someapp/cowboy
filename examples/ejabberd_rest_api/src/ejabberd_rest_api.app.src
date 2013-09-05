@@ -13,7 +13,6 @@
 		online_stat_model,
 		user_presence_db,
 		user_presence_srv,
-		mychild_server,
 		ejabberd_online_stat_handler,
 		ejabberd_online_user_handler,
 		ejabberd_online_user_set_handler,
@@ -37,10 +36,28 @@
         sasl,
         net_adm,
         mnesia,
+		edown,
+		cowlib,
         ranch,
-		cowboy
+		cowboy,
+		jsx,
+		mimetypes,
+		reloader,
+		parse_trans
+		
 	]},
 	{mod, {ejabberd_rest_api, []}},
 	{env, [
+		{cluster_master, 'ejabberd@172.16.210.163'},
+ 		{host, <<"socialstream.stgv3.spark.net">>},
+ 		{environment, <<"chat.stgv3.spark.net">>},
+ 		{refresh_interval, 3000},
+ 		{table_clone_type, 'ram_copies'},		
+ 		{port, 8080},
+ 		{nb_acceptors, 5},
+ 		{listen_interface, "eth0"},
+ 		{listen_ip, "127.0.0.1"},
+ 		{listen_port, 8000},
+ 		{log_dir,"log"} 
 	]}
 ]}.

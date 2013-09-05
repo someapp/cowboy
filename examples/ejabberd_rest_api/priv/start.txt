@@ -1,0 +1,25 @@
+CFHJKHWHACWYZQPBDHWS
+code:add_path("ebin").
+code:add_path("deps/cowlib/ebin").
+code:add_path("deps/cowboy/ebin").
+code:add_path("deps/edown/ebin").
+code:add_path("deps/json_rec/ebin").
+code:add_path("deps/jsx/ebin").
+code:add_path("deps/mimetypes/ebin").
+code:add_path("deps/parse_trans/ebin").
+code:add_path("deps/ranch/ebin").
+code:add_path("deps/reloader/ebin").
+ejabberd_rest_api:start().
+
+code:add_path("ebin").
+code:add_path("deps/cowboy/ebin").
+code:add_path("deps/edown/ebin").
+code:add_path("deps/json_rec/ebin").
+code:add_path("deps/jsx/ebin").
+code:add_path("deps/mimetypes/ebin").
+code:add_path("deps/parse_trans/ebin").
+code:add_path("deps/ranch/ebin").
+code:add_path("deps/reloader/ebin").
+ejabberd_rest_api:start().l -setcookie 'CFHJKHWHACWYZQPBDHWS' -sname "ejabberd@lastge"-pa ebin deps/*/ebin -mnesia dir "/opt/mycowboy/cowboy/examples/database"
+
+(-s ejabberd_rest_api start) not work

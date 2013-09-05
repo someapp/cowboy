@@ -12,7 +12,7 @@
 -define (SERVER, ?MODULE).
 -define(APP, 'ejabberd_rest_api').
 
--define(CHILD(I, Type, Opt), {I, {I, start_link, Opt}, permanent, 5000, Type, [I]}).
+-define(CHILD(I, Type, StartType, Opt), {I, {I, start_link, Opt}, StartType, 5000, Type, [I]}).
 
 %% API.
 
@@ -29,6 +29,7 @@ init(Args) ->
 	RefreshInterval = proplists:get_value(refresh_interval, Args),
 	TableCloneType = proplists:get_value(table_clone_type, Args),
 	Environment = proplists:get_value(environment, Args),
+	StartType =  proplists:get_value(start_type, Args),
 	Opt1 = [{cluster_master, ClusterMaster},
     		{refresh_interval, RefreshInterval},
     		{environment, Environment}
@@ -38,9 +39,9 @@ init(Args) ->
     	   ],
     			
 	Children = lists:flatten([
-	%	?CHILD(mychild_server, worker, [Opt1])
-    	?CHILD(user_presence_srv, worker, [Opt1]),
-    	?CHILD(user_presence_db, worker, [Opt2])
+	%	?CHILD(mychild_server, worker, StartType, [Opt1])
+    	?CHILD(user_presence_srv, worker, StartType, [Opt1]),
+    	?CHILD(user_presence_db, worker, StartType, [Opt2])
     ]),
 	error_logger:info_msg("Initiating sub applications: ~p ~p~n",
 			[user_presence_srv, user_presence_db]),

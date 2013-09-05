@@ -17,7 +17,7 @@ ERL="/opt/otp_src_R15B03/bin/erl"
 HERE=`which "$0" 2>/dev/null || echo .`
 BASE=`dirname $HERE`
 NODE=`hostname -s`
-NAME=socialstream@${NODE}
+NAME="socialstream@${NODE}"
 COOKIE=CFHJKHWHACWYZQPBDHWS
 ROOTDIR=`cd $BASE; pwd`
 RUNDIR="${ROOTDIR}"
@@ -42,13 +42,12 @@ start()
     ulimit -n $ERL_MAX_PORTS 2>/dev/null
    
     erl -setcookie ${COOKIE} \
-    	 ${ERLANG_OPTS} \
+    	 ${ERLANG_OPTS} \ 	 
     	-sname ${NAME} \
     	-pa ebin deps/*/ebin \
-    	-s ejabberd_rest_api start -a -b 
-    #	\
-    #	-sasl sasl_error_logger \{file,\"$SASL_LOG_PATH\"\}
-    
+    	-mnesia dir ${MNESIA_DB} \
+    	-sasl sasl_error_logger \{file,\"$SASL_LOG_PATH\"\}
+    	-s 'ejabberd_rest_api' start
 }
 
 
