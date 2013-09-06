@@ -3,7 +3,7 @@
 -behaviour(application).
 
 %% API.
--export([start/0, start/2]).
+-export([start/2]).
 -export([stop/1]).
 
 -define(APP, 'ejabberd_rest_api').
@@ -12,11 +12,8 @@
 
 %% API.
 
-start()->
-	start(?STARTYPE, ?CONF).
 
-
-start(Type, Args) ->
+start(normal, Args) ->
 	error_logger:info_msg("Starting ~p with arguments: ~p~n",
 				 [?APP, lists:flatten(Args)]),   
     ok = ensure_started(),
@@ -30,9 +27,9 @@ start(Type, Args) ->
     NumberAcceptors =  proplists:get_value(nb_acceptors, CfgOpts), 
 
     Opts = load_config(CfgOpts),
-    Opts0 = lists:concat([Opts,[{start_type, Type}]]),
+    Opts0 = lists:concat([Opts,[{start_type, permanent}]]),
 
-    R = ejabberd_rest_api_sup:start_link(Opts0),
+    R = ejabberd_rest_api_sup:start_link(Opts),
    	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
 	
    	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
@@ -46,7 +43,10 @@ start(Type, Args) ->
 	%R = ejabberd_rest_api_sup:start_link(Opts),
 	error_logger:info_msg("Start ejabberd api status: ~p~n",
 				 [R]),
-	Ret.
+	Ret;
+	
+start(A,B)->
+	{error, {A,B, badarg}}.
 
 stop(_State) ->
 	ok.

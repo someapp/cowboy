@@ -40,13 +40,13 @@ start()
 {
    
     ulimit -n $ERL_MAX_PORTS 2>/dev/null
-   
+    echo "Starting erl: "`erl -version`
     erl -setcookie ${COOKIE} \
     	 ${ERLANG_OPTS} \ 	 
     	-sname ${NAME} \
     	-pa ebin deps/*/ebin \
     	-mnesia dir ${MNESIA_DB} \
-    	-s 'ejabberd_rest_api' start \
+    	-s ejabberd_rest_api \
     	-sasl sasl_error_logger \{file,\"$SASL_LOG_PATH\"\}
 }
     	
