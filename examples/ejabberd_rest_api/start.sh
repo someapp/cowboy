@@ -46,9 +46,10 @@ start()
     	-sname ${NAME} \
     	-pa ebin deps/*/ebin \
     	-mnesia dir ${MNESIA_DB} \
+    	-s 'ejabberd_rest_api' start \
     	-sasl sasl_error_logger \{file,\"$SASL_LOG_PATH\"\}
-    	-s 'ejabberd_rest_api' start
 }
+    	
 
 
 [ -d "${MNESIA_DB}" ] || mkdir -p "${MNESIA_DB}"

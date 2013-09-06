@@ -17,7 +17,8 @@ start()->
 
 
 start(Type, Args) ->
-   
+	error_logger:info_msg("Starting ~p with arguments: ~p~n",
+				 [?APP, lists:flatten(Args)]),   
     ok = ensure_started(),
     
     CfgOpts = load_config_file(Args),
