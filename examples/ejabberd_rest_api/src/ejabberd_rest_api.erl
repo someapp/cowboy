@@ -29,7 +29,7 @@ start(normal, Args) ->
     Opts = load_config(CfgOpts),
     Opts0 = lists:concat([Opts,[{start_type, permanent}]]),
 
-    R = ejabberd_rest_api_sup:start_link(Opts),
+    R = ejabberd_rest_api_sup:start_link(Opts0),
    	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
 	
    	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
@@ -43,7 +43,7 @@ start(normal, Args) ->
 	%R = ejabberd_rest_api_sup:start_link(Opts),
 	error_logger:info_msg("Start ejabberd api status: ~p~n",
 				 [R]),
-	Ret;
+    {ok, Ret};
 	
 start(A,B)->
 	{error, {A,B, badarg}}.
