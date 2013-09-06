@@ -1,5 +1,8 @@
 ## Name of the node
--sname socialstream@`hostname -s`
+-sname socialstream@lastgejabberd302
+
+## Inet 
+-kernel inetrc '"./priv/inetrc"'
 
 ## Cookie for distributed erlang
 -setcookie CFHJKHWHACWYZQPBDHWS
@@ -19,6 +22,7 @@
 -env ERL_FULLSWEEP_AFTER 10
 
 -pa deps/*/ebin
+
 
 
 

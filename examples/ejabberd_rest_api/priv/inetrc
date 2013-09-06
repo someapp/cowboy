@@ -1,0 +1,5 @@
+{lookup,["file","native"]}.
+{host,{127,0,0,1}, ["localhost","chat.dev0.spark.net"]}.
+{host,{172,16,210,162,["ejabberd@lastgejabberd301"]}.
+{host,{172,16,210,163,["ejabberd@lastgejabberd302"]}.
+{file, resolv, "/etc/resolv.conf"}.
