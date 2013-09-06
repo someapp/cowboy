@@ -46,8 +46,7 @@
 		
 	]},
 	{mod, {ejabberd_rest_api, 
-			[normal, 
-			"./priv/ejabberd_rest_api.config"]
+			["./priv/ejabberd_rest_api.config"]
 	}},
 	{env, [
 		{cluster_master, 'ejabberd@172.16.210.163'},

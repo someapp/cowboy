@@ -52,7 +52,7 @@ stop(_State) ->
 	ok.
 
 ensure_started()->
- 	reloader:start(),
+ 	%reloader:start(),
     Apps = [ 
      		crypto,
     		public_key, 
