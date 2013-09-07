@@ -1,5 +1,5 @@
 ## Name of the node
--sname socialstream@lastgejabberd302
+-name socialstream@chat.dev0.spark.net
 
 ## Inet 
 -kernel inetrc '"./priv/inetrc"'
