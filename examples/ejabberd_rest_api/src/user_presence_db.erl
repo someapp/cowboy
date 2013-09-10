@@ -121,8 +121,8 @@ handle_call({join_as_slave, Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
-   prepare_sync(Name, Tabs, State#state.type),
-   Reply = post_sync(Name),
+   Reply = prepare_sync(Name, Tabs, State#state.type),
+   error_logger:info_msg("Done with sync from server ~p with status ~p~n",[Name, Reply]),
    NewState = #state{cluster_master= Name, 
 	            reachable = State#state.reachable +1},
 
@@ -239,10 +239,10 @@ sync_node_some_tables(NodeName, Tables) ->
   ok = mnesia:wait_for_tables(Tables, ?TAB_TIMEOUT), ok.
  
 is_node_reachable('pong') -> 
-  error_logger:info_msg("Ok reachable ~p~n",[]),
+  error_logger:info_msg("Ok reachable ~n",[]),
   {ok, reachable}; 
 is_node_reachable('pang') -> 
-  error_logger:error_msg("Error unreachable ~p~n",[]),
+  error_logger:error_msg("Error unreachable ~n",[]),
   {error, unreachable};
 is_node_reachable(Name) when is_atom(Name) ->
   error_logger:info_msg("Going to ping node ~p",[Name]),
