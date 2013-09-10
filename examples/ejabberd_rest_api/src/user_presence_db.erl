@@ -208,8 +208,8 @@ prepare_sync(TargetName, Type) ->
   prepare_sync(TargetName, [schema], Type).
 
 prepare_sync(TargetName, Tabs, Type) -> 
-  error_logger:info_msg("Stopping mnesia delete schema ~p",[TargetName, Type]),
-  mnesia:stop(),
+  error_logger:info_msg("Stopping mnesia at ~p delete schema ~p",[TargetName, Type]),
+  catch(mnesia:stop()),
   mnesia:delete_schema([node()]),
   mnesia:start(),
   mnesia:change_config(extra_db_nodes,[TargetName]),
