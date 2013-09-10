@@ -1,12 +1,14 @@
 ## Name of the node
--name socialstream@chat.dev0.spark.net
+-name socialstream@192.168.4.124
 
 ## Inet 
 -kernel inetrc '"./priv/inetrc"'
 
 ## Cookie for distributed erlang
--setcookie CFHJKHWHACWYZQPBDHWS
+-setcookie ERLANG 
 
+-mnesia dir '"./database"' 
+        
 ## Heartbeat management; auto-restarts VM if it dies or becomes unresponsive
 ## (Disabled by default..use with caution!)
 ##-heart

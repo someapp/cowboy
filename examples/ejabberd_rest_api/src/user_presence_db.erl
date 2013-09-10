@@ -190,40 +190,40 @@ handle_call({sync_node_session_table, Name}, From, State)
   handle_call({sync_node_some_tables, Name, [session]}, From, State);
 
 handle_call(stop, _From, State) ->
-   Reply = terminate(normal, State),
-   {reply, normal, stopped, State};
+  Reply = terminate(normal, State),
+  {reply, normal, stopped, State};
 
 handle_call(_Request, _From, State) ->
-   Reply = {error, function_clause},
-   {reply, Reply, State}.
+  Reply = {error, function_clause},
+  {reply, Reply, State}.
 
 handle_cast(Info, State) ->
-   erlang:display(Info),
-   error_logger:info_msg("Unknown Cast message ~p~n",[Info]),
-   {noreply, State}.
+  erlang:display(Info),
+  error_logger:info_msg("Unknown Cast message ~p~n",[Info]),
+  {noreply, State}.
 
 -spec handle_info(tuple(), state()) -> {ok, state()}.
 handle_info(Info, State) ->
-   error_logger:info_msg("Unknown Info message ~p~n",[Info]),
-   {noreply, State}.
+  error_logger:info_msg("Unknown Info message ~p~n",[Info]),
+  {noreply, State}.
 
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
 handle_info(stop, From, State)->
-   terminate(normal, State).
+  terminate(normal, State).
 
 -spec terminate(atom(), state()) -> ok.
 terminate(Reason, State) ->
-   error_logger:info_msg("user_presence_db at ~p terminated",[node()]), 
-   ok.
+  error_logger:info_msg("user_presence_db at ~p terminated",[node()]), 
+  ok.
 
 code_change(_OldVsn, State, _Extra)->
-   {ok, State}.
+  {ok, State}.
 
 prepare_sync(TargetName) ->
-   prepare_sync(TargetName,[schema], ?COPY_TYPE).  
+  prepare_sync(TargetName,[schema], ?COPY_TYPE).  
 
 prepare_sync(TargetName, Type) ->
-   prepare_sync(TargetName, [schema], Type).
+  prepare_sync(TargetName, [schema], Type).
 
 prepare_sync(TargetName, Tabs, Type) -> 
   error_logger:info_msg("Stopping mnesia delete schema ~p",[TargetName, Type]),
@@ -249,15 +249,19 @@ sync_node_all_tables(NodeName) ->
 
 sync_node_some_tables(NodeName, Tables) ->
   [{Tb, fun(Tb, Type) -> 
-              {atomic, ok} = mnesia:add_table_copy(Tb, node(), Type),
-              error_logger:info_msg("Added table ~p",[Tb])
+             {atomic, ok} = mnesia:add_table_copy(Tb, node(), Type),
+             error_logger:info_msg("Added table ~p",[Tb])
         end} 
    || {Tb, [{NodeName, Type}]} <- [{T, mnesia:table_info(T, where_to_commit)}
    || T <- Tables]],
   ok = mnesia:wait_for_tables(Tables, ?TAB_TIMEOUT), ok.
  
-is_node_reachable('pong') -> {ok, reachable}; 
-is_node_reachable('pang') -> {error, unreachable};
+is_node_reachable('pong') -> 
+  error_logger:info_msg("Ok reachable ~p~n",[]),
+  {ok, reachable}; 
+is_node_reachable('pang') -> 
+  error_logger:error_msg("Error unreachable ~p~n",[]),
+  {error, unreachable};
 is_node_reachable(Name) when is_atom(Name) ->
-   error_logger:info_msg("Going to ping node ~p",[Name]),
-   is_node_reachable(net_adm:ping(Name)).
+  error_logger:info_msg("Going to ping node ~p",[Name]),
+  is_node_reachable(net_adm:ping(Name)).
