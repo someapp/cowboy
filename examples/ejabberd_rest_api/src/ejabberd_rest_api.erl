@@ -20,14 +20,15 @@ start(normal, Args) ->
     
     CfgOpts = load_config_file(Args),
     
-    ClusterMaster =  proplists:get_value(cluster_master, CfgOpts),
+  % ClusterMaster =  proplists:get_value(cluster_master, CfgOpts),
     Host =  proplists:get_value(host, CfgOpts),
     Port =  proplists:get_value(port, CfgOpts),
-    TabCopyType =   proplists:get_value(table_clone_type, CfgOpts),
+  %  TabCopyType =   proplists:get_value(table_clone_type, CfgOpts),
+  %  EjabTabs = Tables = proplists:get_value(ejab_table, CfgOpts),
     NumberAcceptors =  proplists:get_value(nb_acceptors, CfgOpts), 
-
+    StartType = proplists:get_value(start_type, CfgOpts),
     Opts = load_config(CfgOpts),
-    Opts0 = lists:concat([Opts,[{start_type, permanent}]]),
+    Opts0 = lists:concat([Opts,[{start_type, StartType}]]),
 
     R = ejabberd_rest_api_sup:start_link(Opts0),
    	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
@@ -81,6 +82,8 @@ load_config(Opts)->
     Environment = get_config_value(environment, Opts),
     ClusterMaster = get_config_value(cluster_master, Opts),
     TabCopyType = get_config_value(table_clone_type, Opts),
+    EjabTabs = get_config_value(ejab_table, Opts),
+    StartType = get_config_value(start_type, Opts),
     ClusterEthInf =  get_config_value(listen_interface, Opts),	
     ClusterListenIp =  get_config_value(listen_ip, Opts),
   	ClusterListenPort =  get_config_value(listen_port, Opts),
@@ -90,6 +93,11 @@ load_config(Opts)->
       {cluster_master, ClusterMaster},
       {refresh_interval, RefreshInterval},
       {table_clone_type, TabCopyType},
+
+   	
+   	  {ejab_table, EjabTabs},
+ 	  {start_type, StartType},      
+      
       {listen_interface, ClusterEthInf},
       {listen_ip, ClusterListenIp},
       {listen_port, ClusterListenPort}

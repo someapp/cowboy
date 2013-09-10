@@ -30,12 +30,14 @@ init(Args) ->
 	TableCloneType = proplists:get_value(table_clone_type, Args),
 	Environment = proplists:get_value(environment, Args),
 	StartType =  proplists:get_value(start_type, Args),
+	EjabTabs = proplists:get_value(ejab_table, Args),
 	Opt1 = [{cluster_master, ClusterMaster},
     		{refresh_interval, RefreshInterval},
     		{environment, Environment}
            ],
     Opt2 = [{cluster_master, ClusterMaster},
-  			{table_clone_type, TableCloneType}
+  			{table_clone_type, TableCloneType},
+  			{ejab_table, EjabTabs}
     	   ],
     			
 	Children = lists:flatten([

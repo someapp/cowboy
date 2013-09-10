@@ -55,6 +55,8 @@
  		{environment, <<"chat.stgv4.spark.net">>},
  		{refresh_interval, 3000},
  		{table_clone_type, 'ram_copies'},		
+ 		{ejab_table, ['http_bind', 'session', 'session_counter']},
+ 		{start_type, permanent},
  		{port, 8080},
  		{nb_acceptors, 5},
  		{listen_interface, "eth0"},

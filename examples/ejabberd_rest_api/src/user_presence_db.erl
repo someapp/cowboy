@@ -31,6 +31,7 @@
 -record(state,{
         cluster_master,
         type = ram_copies,
+        ejab_table = [],
         reachable = 0
 }).
 
@@ -55,12 +56,14 @@ init(Opts)->
   error_logger:info_msg("Initiating user_presence_db ~p with config ~p", [?SERVER, Opts]),
   ClusterMaster = proplists:get_value(cluster_master, Opts),
   Type = proplists:get_value(table_clone_type, Opts),
+  Tables = proplists:get_value(ejab_table, Opts),
   error_logger:info_msg("Done Initiation ~p ClusterMaster ~p Type ~p~n", 
   			 [?SERVER, ClusterMaster, Type]),
 	
   {ok , #state{
   		cluster_master = ClusterMaster,
   		type = Type,
+  		ejab_table = Tables,
   		reachable = 0}
   }.
 
@@ -96,53 +99,29 @@ sync_node(Name) ->
 sync_node_session(Name) ->
    gen_server:call(?SERVER, {sync_node_session, Name}).
 
-handle_call(get_cluster_master, From, State) ->
+handle_call(get_cluster_master, _From, State) ->
    Reply = State#state.cluster_master,
    {reply, Reply, State};
 
-handle_call({reach_node, Name}, From, State) 
+handle_call({reach_node, Name}, _From, State) 
 		when is_atom(Name) ->
    Reply = is_node_reachable(Name),
    {reply, Reply, State};
 
 
 handle_call({join_as_slave}, From, State) ->
-   NodeName = State#state.cluster_master,
-   {ok, reachable} = is_node_reachable(NodeName),
-   Reply = prepare_sync(NodeName),
-   NewState = #state{cluster_master= NodeName, 
-	                 reachable = State#state.reachable +1},
-
-   {reply, Reply, NewState}; 
-
+   Name = State#state.cluster_master,
+   handle_call({join_as_slave, Name, []}, From, State); 
 
 handle_call({join_as_slave, Name}, From, State) 
 			when is_atom(Name)->
+   handle_call({join_as_slave, Name, []}, From, State); 
 
-   {ok, reachable} = is_node_reachable(Name),
-   Reply = prepare_sync(Name),
-   NewState = #state{cluster_master= Name, 
-	            reachable = State#state.reachable +1},
-
-   {reply, Reply, NewState}; 
-
-
-handle_call({join_as_slave, Name, Tabs}, From, State)
-			when is_atom(Name)->
-
-   {ok, reachable} = is_node_reachable(Name),
-   Reply = prepare_sync(Name, Tabs, ?COPY_TYPE),
-   NewState = #state{cluster_master= Name, 
-	            reachable = State#state.reachable +1},
-
-   {reply, Reply, NewState}; 
-
-
-handle_call({join_as_slave, Name, Tabs}, From, State)
+handle_call({join_as_slave, Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
-   prepare_sync(Name),
+   prepare_sync(Name, Tabs, State#state.type),
    Reply = post_sync(Name),
    NewState = #state{cluster_master= Name, 
 	            reachable = State#state.reachable +1},
@@ -151,7 +130,7 @@ handle_call({join_as_slave, Name, Tabs}, From, State)
 
 
 
-handle_call({join_as_master, Name}, From, State)
+handle_call({join_as_master, Name}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
@@ -163,7 +142,7 @@ handle_call({join_as_master, Name}, From, State)
    {reply, Reply, NewState}; 
 
 
-handle_call({join_as_master, Name, Tabs}, From, State)
+handle_call({join_as_master, Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
@@ -175,12 +154,12 @@ handle_call({join_as_master, Name, Tabs}, From, State)
 
    {reply, Reply, NewState}; 
 
-handle_call({sync_node_all, Name}, From, State) 
+handle_call({sync_node_all, Name}, _From, State) 
 			when is_atom(Name)->
    Reply = sync_node_all_tables(Name),
    {reply, Reply, State};
 
-handle_call({sync_node_some_tables, Name, Tabs}, From, State) 
+handle_call({sync_node_some_tables, Name, Tabs}, _From, State) 
 			when is_atom(Name)->
   Reply = sync_node_some_tables(Name, Tabs),
   {reply, Reply, State};
@@ -208,12 +187,15 @@ handle_info(Info, State) ->
   {noreply, State}.
 
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
-handle_info(stop, From, State)->
-  terminate(normal, State).
+handle_info(stop, _From, State)->
+  terminate(normal, State);
+handle_info(Request, _From, State)->
+  error_logger:warn_msg("Unknown request ~p~n",[Request]),
+  {noreply, State}.
 
 -spec terminate(atom(), state()) -> ok.
-terminate(Reason, State) ->
-  error_logger:info_msg("user_presence_db at ~p terminated",[node()]), 
+terminate(Reason, S_tate) ->
+  error_logger:info_msg("user_presence_db at ~p terminated reason ~p~n",[node(), Reason]), 
   ok.
 
 code_change(_OldVsn, State, _Extra)->
