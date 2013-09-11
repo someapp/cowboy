@@ -13,7 +13,10 @@ route_map(Host, Opts) when is_binary(Host)->
   		[
   			{"/online/stat/total/", ejabberd_online_stat_handler, Opts},
 			{"/online/user/", ejabberd_online_user_handler, Opts},
-			{"/online/user/total/", ejabberd_online_user_set_handler, Opts}
+			{"/online/user/total/", 
+			     ejabberd_online_user_set_handler, Opts},
+			{"/*", ejabberd_default_handler, Opts}
+			
 		]
 	}
   ].

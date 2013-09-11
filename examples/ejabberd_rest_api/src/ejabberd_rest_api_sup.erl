@@ -41,7 +41,6 @@ init(Args) ->
     	   ],
     			
 	Children = lists:flatten([
-	%	?CHILD(mychild_server, worker, StartType, [Opt1])
     	?CHILD(user_presence_srv, worker, StartType, [Opt1]),
     	?CHILD(user_presence_db, worker, StartType, [Opt2])
     ]),
