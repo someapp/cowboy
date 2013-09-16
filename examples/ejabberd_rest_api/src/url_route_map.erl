@@ -1,13 +1,22 @@
 -module(url_route_map).
 -export([
 		route_map/1,
-		route_map/2
+		route_map/2, 
+		route_map/3
 ]).
 
+-spec route_map(list()) -> list().
 route_map(Opts)->
-  route_map('socialstream.spark.net', Opts).
+  route_map(Opts, []).
 
-route_map(Host, Opts) when is_binary(Host)->
+-spec route_map(list(),list()) -> list().
+
+route_map(Opts, ConfigHosts)->
+  Host = 'socialstream.spark.net',
+  route_map(Host, Opts, ConfigHosts).
+
+-spec route_map(list(),list(),list()) -> list().
+route_map(Host, Opts, ConfigHosts)->
   [	
   	{Host,
   		[
@@ -15,8 +24,10 @@ route_map(Host, Opts) when is_binary(Host)->
 			{"/online/user/", ejabberd_online_user_handler, Opts},
 			{"/online/user/total/", 
 			     ejabberd_online_user_set_handler, Opts},
-			{"/*", ejabberd_default_handler, Opts}
+			{"/*", cowboy_static, {fun mimetypes:path_to_mime/2, default}}
 			
 		]
 	}
   ].
+
+
