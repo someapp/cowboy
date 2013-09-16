@@ -31,7 +31,8 @@ start(normal, Args) ->
     Opts0 = lists:concat([Opts,[{start_type, StartType}]]),
 
     R = ejabberd_rest_api_sup:start_link(Opts0),
-   	Dispatch = cowboy_router:compile(url_route_map:route_map(Host, [])),
+   	Dispatch = cowboy_router:compile(
+   					url_route_map:route_map(Host, [], [Host])),
 	
    	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
    		[{port, Port}], 
