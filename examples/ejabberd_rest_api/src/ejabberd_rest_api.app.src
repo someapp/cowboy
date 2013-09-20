@@ -8,11 +8,13 @@
 		app_config_util,
 		error_hook_responder,
 		url_route_map,
+		
 		online_user_model,
 		online_user_set_model,
 		online_stat_model,
 		user_presence_db,
 		user_presence_srv,
+		default_handler,
 		ejabberd_online_stat_handler,
 		ejabberd_online_user_handler,
 		ejabberd_online_user_set_handler,

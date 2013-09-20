@@ -4,6 +4,7 @@
 
 -export([onrequest_hook/1]).
 -export([onresponse_hook/3]).
+%-export([onresponse_hook/6]).
 -export([respond/4]).
 
 onrequest_hook(Req)->
@@ -45,7 +46,6 @@ onresponse_hook(Code, Headers, Req) ->
       				 Cookies, Headers]),
     error_logger:info_msg(Msg,[]),
     Req.
-
 
 
 
