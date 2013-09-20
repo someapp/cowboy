@@ -4,6 +4,7 @@
 
 -export([onrequest_hook/1]).
 -export([onresponse_hook/3]).
+-export([onresponse_hook/4]).
 %-export([onresponse_hook/6]).
 -export([respond/4]).
 
@@ -47,7 +48,8 @@ onresponse_hook(Code, Headers, Req) ->
     error_logger:info_msg(Msg,[]),
     Req.
 
-
+onresponse_hook(Code, Headers, Req, Body) ->
+	respond(Code, Headers, Body, Req).
 
 respond(404, Headers, <<>>, Req) ->
 	{Path, Req2} = cowboy_req:path(Req),
@@ -62,8 +64,26 @@ respond(Code, Headers, <<>>, Req) when is_integer(Code), Code >= 400 ->
 		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
 	{ok, Req2} = cowboy_req:reply(Code, Headers2, Body, Req),
 	Req2;
-respond(_Code, _Headers, _Body, Req) ->
-	Req.
+	
+respond(Code, Headers, _Body, <<>>) ->
+	error_logger:info_msg("Code, Headers, Req: ~p~n", 
+			[Code, Headers, <<>>]),
+	<<>>;     
+     	
+respond(Code, Headers, _Body, Req) ->
+	Body1 = <<"500 Internal Server Error. \n">>,
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, integer_to_list(iolist_size(Body1))}),
+	
+	error_logger:info_msg("Req: ~p~n", [Req]),			
+		
+	{ok, Req1} = cowboy_req:path(Req),
+     
+    error_logger:info_msg("Req1: ~p~n",[Req1]),
+    
+
+	{ok, Req2} = cowboy_req:reply(500, Headers2, Body1, Req1),
+	Req2.
 
 
 %% +-----------------------------------------------------------------+

@@ -38,7 +38,7 @@ start(normal, Args) ->
    		[{compress, true},
    		 {env, [{dispatch, Dispatch}]},		 
    		 {onrequest, fun error_hook_responder:onrequest_hook/1}
-		% ,{onresponse, fun error_hook_responder:onresponse_hook/3}
+		,{onresponse, fun error_hook_responder:onresponse_hook/4}
     ]),
 	
 	%R = ejabberd_rest_api_sup:start_link(Opts),
