@@ -29,6 +29,7 @@
 -define(HANDLER, ?MODULE).
 
 init({tcp, http}, Req, Opts)->
+	error_logger:info_msg("Init ~p ~n",[?HANDLER]),
 	ClusterHead = proplists:get_value(cluster_head, Opts),
 	TabCopyType =  proplists:get_value(table_copy_type, Opts),
 	DataModel = ?DATAMODEL,
@@ -62,6 +63,7 @@ get_resource(Req, State)->
 					
 	Since0 = app_util:to_integer(Since),
 	error_logger:info_msg("~p:get_resource: ~p~n", [?MODULE, Since0]),
+	
 	
    	case user_presence_srv:list_online_count(Since0) of
 		{ok, Count} -> 
