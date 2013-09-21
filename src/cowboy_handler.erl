@@ -90,22 +90,21 @@ handler_init(Req, State, Handler, HandlerOpts) ->
 		{upgrade, protocol, Module, Req2, HandlerOpts2} ->
 			upgrade_protocol(Req2, State, Handler, HandlerOpts2, Module)
 	catch Class:Reason ->
-		error_logger:error_msg(
-			"** Cowboy handler ~p terminating in ~p/~p~n"
-			"   for the reason ~p:~p~n"
-			"** Options were ~p~n"
-			"** Request was ~p~n"
-			"** Stacktrace: ~p~n~n",
-			[Handler, init, 3, Class, Reason, HandlerOpts,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
-		error_terminate(Req, State)
+		cowboy_req:maybe_reply(500, Req),
+		erlang:Class([
+			{reason, Reason},
+			{mfa, {Handler, init, 3}},
+			{stacktrace, erlang:get_stacktrace()},
+			{req, cowboy_req:to_list(Req)},
+			{opts, HandlerOpts}
+		])
 	end.
 
 -spec upgrade_protocol(Req, #state{}, module(), any(), module())
 	-> {ok, Req, Env}
 	| {suspend, module(), atom(), any()}
 	| {halt, Req}
-	| {error, cowboy_http:status(), Req}
+	| {error, cowboy:http_status(), Req}
 	when Req::cowboy_req:req(), Env::cowboy_middleware:env().
 upgrade_protocol(Req, #state{env=Env},
 		Handler, HandlerOpts, Module) ->
@@ -121,16 +120,15 @@ handler_handle(Req, State, Handler, HandlerState) ->
 			terminate_request(Req2, State, Handler, HandlerState2,
 				{normal, shutdown})
 	catch Class:Reason ->
-		error_logger:error_msg(
-			"** Cowboy handler ~p terminating in ~p/~p~n"
-			"   for the reason ~p:~p~n"
-			"** Handler state was ~p~n"
-			"** Request was ~p~n"
-			"** Stacktrace: ~p~n~n",
-			[Handler, handle, 2, Class, Reason, HandlerState,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		cowboy_req:maybe_reply(500, Req),
 		handler_terminate(Req, Handler, HandlerState, Reason),
-		error_terminate(Req, State)
+		erlang:Class([
+			{reason, Reason},
+			{mfa, {Handler, handle, 2}},
+			{stacktrace, erlang:get_stacktrace()},
+			{req, cowboy_req:to_list(Req)},
+			{state, HandlerState}
+		])
 	end.
 
 %% Update the state if the response was sent in the callback.
@@ -195,12 +193,13 @@ handler_loop(Req, State=#state{loop_buffer_size=NbBytes,
 			if	NbBytes2 > Threshold ->
 					_ = handler_terminate(Req, Handler, HandlerState,
 						{error, overflow}),
-					error_terminate(Req, State);
+					cowboy_req:maybe_reply(500, Req),
+					exit(normal);
 				true ->
 					Req2 = cowboy_req:append_buffer(Data, Req),
 					State2 = handler_loop_timeout(State#state{
 						loop_buffer_size=NbBytes2}),
-					handler_loop(Req2, State2, Handler, HandlerState)
+					handler_before_loop(Req2, State2, Handler, HandlerState)
 			end;
 		{Closed, Socket} ->
 			terminate_request(Req, State, Handler, HandlerState,
@@ -214,14 +213,26 @@ handler_loop(Req, State=#state{loop_buffer_size=NbBytes,
 		{timeout, OlderTRef, ?MODULE} when is_reference(OlderTRef) ->
 			handler_before_loop(Req, State, Handler, HandlerState);
 		Message ->
-			handler_call(Req, State, Handler, HandlerState, Message)
+			%% We set the socket back to {active, false} mode in case
+			%% the handler is going to call recv. We also flush any
+			%% data received after that and put it into the buffer.
+			%% We do not check the size here, if data keeps coming
+			%% we'll error out on the next packet received.
+			Transport:setopts(Socket, [{active, false}]),
+			Req2 = receive {OK, Socket, Data} ->
+				cowboy_req:append_buffer(Data, Req)
+			after 0 ->
+				Req
+			end,
+			handler_call(Req2, State, Handler, HandlerState, Message)
 	end.
 
 -spec handler_call(Req, #state{}, module(), any(), any())
 	-> {ok, Req, cowboy_middleware:env()}
 	| {error, 500, Req} | {suspend, module(), atom(), [any()]}
 	when Req::cowboy_req:req().
-handler_call(Req, State, Handler, HandlerState, Message) ->
+handler_call(Req, State=#state{resp_sent=RespSent},
+		Handler, HandlerState, Message) ->
 	try Handler:info(Message, Req, HandlerState) of
 		{ok, Req2, HandlerState2} ->
 			handler_after_loop(Req2, State, Handler, HandlerState2,
@@ -232,16 +243,19 @@ handler_call(Req, State, Handler, HandlerState, Message) ->
 			handler_after_callback(Req2, State#state{hibernate=true},
 				Handler, HandlerState2)
 	catch Class:Reason ->
-		error_logger:error_msg(
-			"** Cowboy handler ~p terminating in ~p/~p~n"
-			"   for the reason ~p:~p~n"
-			"** Handler state was ~p~n"
-			"** Request was ~p~n"
-			"** Stacktrace: ~p~n~n",
-			[Handler, info, 3, Class, Reason, HandlerState,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		if RespSent ->
+			ok;
+		true ->
+			cowboy_req:maybe_reply(500, Req)
+		end,
 		handler_terminate(Req, Handler, HandlerState, Reason),
-		error_terminate(Req, State)
+		erlang:Class([
+			{reason, Reason},
+			{mfa, {Handler, info, 3}},
+			{stacktrace, erlang:get_stacktrace()},
+			{req, cowboy_req:to_list(Req)},
+			{state, HandlerState}
+		])
 	end.
 
 %% It is sometimes important to make a socket passive as it was initially
@@ -276,21 +290,12 @@ handler_terminate(Req, Handler, HandlerState, Reason) ->
 	try
 		Handler:terminate(Reason, cowboy_req:lock(Req), HandlerState)
 	catch Class:Reason2 ->
-		error_logger:error_msg(
-			"** Cowboy handler ~p terminating in ~p/~p~n"
-			"   for the reason ~p:~p~n"
-			"** Handler state was ~p~n"
-			"** Request was ~p~n"
-			"** Stacktrace: ~p~n~n",
-			[Handler, terminate, 3, Class, Reason2, HandlerState,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()])
+		erlang:Class([
+			{reason, Reason2},
+			{mfa, {Handler, terminate, 3}},
+			{stacktrace, erlang:get_stacktrace()},
+			{req, cowboy_req:to_list(Req)},
+			{state, HandlerState},
+			{terminate_reason, Reason}
+		])
 	end.
-
-%% Only send an error reply if there is no resp_sent message.
--spec error_terminate(Req, #state{})
-	-> {error, 500, Req} | {halt, Req} when Req::cowboy_req:req().
-error_terminate(Req, #state{resp_sent=true}) ->
-	%% Close the connection, but do not attempt sending a reply.
-	{halt, cowboy_req:set([{connection, close}, {resp_state, done}], Req)};
-error_terminate(Req, _) ->
-	{error, 500, Req}.

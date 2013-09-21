@@ -3,16 +3,14 @@
 %% @doc Pastebin handler.
 -module(toppage_handler).
 
-%% REST Callbacks
+%% Standard callbacks.
 -export([init/3]).
 -export([allowed_methods/2]).
 -export([content_types_provided/2]).
 -export([content_types_accepted/2]).
 -export([resource_exists/2]).
--export([post_is_create/2]).
--export([create_path/2]).
 
-%% Callback Callbacks
+%% Custom callbacks.
 -export([create_paste/2]).
 -export([paste_html/2]).
 -export([paste_text/2]).
@@ -47,17 +45,16 @@ resource_exists(Req, _State) ->
 			end
 	end.
 
-post_is_create(Req, State) ->
-	{true, Req, State}.
-
-create_path(Req, State) ->
-	{<<$/, (new_paste_id())/binary>>, Req, State}.
-
 create_paste(Req, State) ->
-	{<<$/, PasteID/binary>>, Req2} = cowboy_req:meta(put_path, Req),
-	{ok, [{<<"paste">>, Paste}], Req3} = cowboy_req:body_qs(Req2),
+	PasteID = new_paste_id(),
+	{ok, [{<<"paste">>, Paste}], Req3} = cowboy_req:body_qs(Req),
 	ok = file:write_file(full_path(PasteID), Paste),
-	{true, Req3, State}.
+	case cowboy_req:method(Req3) of
+		{<<"POST">>, Req4} ->
+			{{true, <<$/, PasteID/binary>>}, Req4, State};
+		{_, Req4} ->
+			{true, Req4, State}
+	end.
 
 paste_html(Req, index) ->
 	{read_file("index.html"), Req, index};
@@ -78,8 +75,7 @@ read_file(Name) ->
 	Binary.
 
 full_path(Name) ->
-	{ok, Cwd} = file:get_cwd(),
-	filename:join([Cwd, "priv", Name]).
+	filename:join([code:priv_dir(rest_pastebin), Name]).
 
 file_exists(Name) ->
 	case file:read_file_info(full_path(Name)) of

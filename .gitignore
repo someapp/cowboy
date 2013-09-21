@@ -2,7 +2,9 @@
 *~
 *.dump
 .cowboy.plt
+.erlang.mk.packages.*
 .eunit
+_rel
 deps
 doc/*.css
 doc/*.html

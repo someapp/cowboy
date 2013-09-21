@@ -1,13 +1,10 @@
 # See LICENSE for licensing information.
 
 PROJECT = cowboy
-RANCH_VSN = 0.6.2
-ERLC_OPTS ?= -Werror +debug_info +warn_export_all +warn_export_vars \
-   +warn_shadow_vars +warn_obsolete_guard # +bin_opt_info +warn_missing_spec
 
-DEPS_DIR ?= $(CURDIR)/deps
-export DEPS_DIR
+# Options.
 
+<<<<<<< HEAD
 # Makefile tweaks.
 
 V ?= 0
@@ -46,53 +43,30 @@ ebin/$(PROJECT).app: src/*.erl
 
 clean:
 	$(gen_verbose) rm -rf ebin/ test/*.beam erl_crash.dump
+=======
+COMPILE_FIRST = cowboy_middleware cowboy_sub_protocol
+CT_SUITES = eunit http spdy ws
+PLT_APPS = crypto public_key ssl
+>>>>>>> eb4843a46b781f93030b623e2b1feb1898ba3da0
 
 # Dependencies.
 
-$(DEPS_DIR)/ranch:
-	@mkdir -p $(DEPS_DIR)
-	git clone -n -- https://github.com/extend/ranch.git $(DEPS_DIR)/ranch
-	cd $(DEPS_DIR)/ranch ; git checkout -q $(RANCH_VSN)
+DEPS = cowlib ranch
+dep_cowlib = pkg://cowlib 0.1.0
+dep_ranch = pkg://ranch 0.8.5
 
-deps: $(DEPS_DIR)/ranch
-	@$(MAKE) -C $(DEPS_DIR)/ranch
+TEST_DEPS = ct_helper gun
+dep_ct_helper = https://github.com/extend/ct_helper.git master
+dep_gun = pkg://gun master
 
-clean-deps:
-	-@$(MAKE) -C $(DEPS_DIR)/ranch clean
+# Standard targets.
 
-# Documentation.
+include erlang.mk
 
-docs: clean-docs
-	$(gen_verbose) erl -noshell \
-		-eval 'edoc:application($(PROJECT), ".", []), init:stop().'
+# Extra targets.
 
-clean-docs:
-	$(gen_verbose) rm -f doc/*.css doc/*.html doc/*.png doc/edoc-info
+.PHONY: autobahn
 
-# Tests.
-
-CT_RUN = ct_run \
-	-noshell \
-	-pa ebin $(DEPS_DIR)/*/ebin \
-	-dir test \
-	-logdir logs
-#	-cover test/cover.spec
-
-tests: ERLC_OPTS += -DTEST=1
-tests: clean clean-deps deps app
-	@mkdir -p logs/
-	@$(CT_RUN) -suite eunit_SUITE http_SUITE ws_SUITE
-
-autobahn: clean clean-deps deps app
+autobahn: clean clean-deps deps app build-tests
 	@mkdir -p logs/
 	@$(CT_RUN) -suite autobahn_SUITE
-
-# Dialyzer.
-
-build-plt: deps app
-	@dialyzer --build_plt --output_plt .$(PROJECT).plt \
-		--apps erts kernel stdlib crypto public_key ssl $(DEPS_DIR)/ranch
-
-dialyze:
-	@dialyzer --src src --plt .$(PROJECT).plt --no_native \
-		-Werror_handling -Wrace_conditions -Wunmatched_returns # -Wunderspecs
