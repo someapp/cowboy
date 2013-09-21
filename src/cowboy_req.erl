@@ -258,7 +258,7 @@ port(Req) ->
 path(Req) ->
 	{Req#http_req.path, Req}.
 
-%% @doc Return the extra path information obtained eply_no_compress,8,from partially matching
+%% @doc Return the extra path information obtained from partially matching
 %% the patch using <em>'...'</em>.
 -spec path_info(Req)
 	-> {cowboy_router:tokens() | undefined, Req} when Req::req().
@@ -274,7 +274,7 @@ qs(Req) ->
 -spec qs_val(binary(), Req)
 	-> {binary() | true | undefined, Req} when Req::req().
 qs_val(Name, Req) when is_binary(Name) ->
-	qs_val(Name, Req, undefined).eply_no_compress,8,
+	qs_val(Name, Req, undefined).
 
 %% @doc Return the query string value for the given key, or a default if
 %% missing.
@@ -662,7 +662,7 @@ stream_body_recv(MaxLength, Req=#http_req{
 		transport=Transport, socket=Socket, buffer=Buffer,
 		body_state={stream, Length, _, _, _}}) ->
 	%% @todo Allow configuring the timeout.
-	case Transport:recv(Socket, min(Length, MaxLength), 20000) of
+	case Transport:recv(Socket, min(Length, MaxLength), 5000) of
 		{ok, Data} -> transfer_decode(<< Buffer/binary, Data/binary >>,
 			Req#http_req{buffer= <<>>});
 		{error, Reason} -> {error, Reason}
