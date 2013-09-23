@@ -3,9 +3,12 @@
 {application, rest_stream_response, [
 	{description, "Cowboy REST with streaming."},
 	{vsn, "1"},
+	
 	{modules, [
+		url_route_map,
 		spark_rest_error_handler,
 		toppage_handler,
+		ejabberd_rest_api_config,
 		rest_stream_response_app,
 		rest_stream_response_sup
 	

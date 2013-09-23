@@ -16,7 +16,7 @@ dep_ranch = pkg://ranch 0.8.5
 dep_parse_trans = https://github.com/uwiger/parse_trans.git 
 dep_json_rec = https://github.com/justinkirby/json_rec.git  
 dep_edown = https://github.com/esl/edown.git 
-dep_exmpp = https://github.com/processone/exmpp.git 0.9.9
+dep_exmpp = https://github.com/processone/exmpp.git v0.9.9
 dep_goldrush = https://github.com/DeadZen/goldrush.git
 dep_lager = https://github.com/basho/lager.git 
 
