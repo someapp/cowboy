@@ -3,7 +3,13 @@
 {application, rest_stream_response, [
 	{description, "Cowboy REST with streaming."},
 	{vsn, "1"},
-	{modules, []},
+	{modules, [
+		spark_rest_error_handler,
+		toppage_handler,
+		rest_stream_response_app,
+		rest_stream_response_sup
+	
+	]},
 	{registered, [rest_stream_response_sup]},
 	{applications, [
 		kernel,

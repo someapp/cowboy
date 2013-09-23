@@ -19,7 +19,9 @@ start(_Type, _Args) ->
 		]}
 	]),
 	{ok, _} = cowboy:start_http(http, 100, [{port, 8080}], [
-		{env, [{dispatch, Dispatch}]}
+		{env, [{dispatch, Dispatch}]},
+		{onresquest, fun spark_rest_error_handler:onrequest_hook/3},
+		{onresponse, fun spark_rest_error_handler:onresponse_hook/4}
 	]),
 	rest_stream_response_sup:start_link().
 
