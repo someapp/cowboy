@@ -10,14 +10,15 @@ PLT_APPS = crypto public_key ssl
 
 # Dependencies.
 
-DEPS = cowlib ranch
+DEPS = cowlib ranch parse_trans json_rec edown exmpp goldrush lager
 dep_cowlib = pkg://cowlib 0.1.0
 dep_ranch = pkg://ranch 0.8.5
-dep_parse_trans = pkg://parse_trans 2.6
-dep_jsonrec = pkg://edown  
-dep_exmpp = pkg:exmpp 0.9.9
-dep_goldrush = pkg:goldrush 20130828
-dep_lager = pkg:lager 2.0.0rc2
+dep_parse_trans = https://github.com/uwiger/parse_trans.git 
+dep_json_rec = https://github.com/justinkirby/json_rec.git  
+dep_edown = https://github.com/esl/edown.git 
+dep_exmpp = https://github.com/processone/exmpp.git 0.9.9
+dep_goldrush = https://github.com/DeadZen/goldrush.git
+dep_lager = https://github.com/basho/lager.git 
 
 TEST_DEPS = ct_helper gun
 dep_ct_helper = https://github.com/extend/ct_helper.git master

@@ -14,6 +14,13 @@
 	{applications, [
 		kernel,
 		stdlib,
+		'parse_trans',
+		'json_rec',
+		exmpp,
+		goldrush,
+		lager,
+		cowlib,
+		ranch,
 		cowboy
 	]},
 	{mod, {rest_stream_response_app, []}},
