@@ -5,7 +5,7 @@
 -kernel inetrc '"./priv/inetrc"'
 
 ## Cookie for distributed erlang
--setcookie ERLANG 
+-setcookie 'CFHJKHWHACWYZQPBDHWS' 
 
 -mnesia dir '"./database"' 
         

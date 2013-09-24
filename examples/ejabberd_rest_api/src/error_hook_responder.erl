@@ -50,7 +50,7 @@ onresponse_hook(Code, Headers, Req) ->
     Req.
 
 onresponse_hook(Code, Headers, Req, Body) ->
-	respond(Code, Headers, Body, Req).
+	error_hook(Code, Headers, Body, Req).
 
 respond(404, Headers, <<>>, Req) ->
 	{Path, Req2} = cowboy_req:path(Req),

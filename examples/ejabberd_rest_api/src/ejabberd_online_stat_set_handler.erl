@@ -58,14 +58,8 @@ terminate(Reason, Req, State)->
 get_resource(Req, State)->
 	Now = erlang:now(),
 	Sec = calendar:time_to_seconds(Now),
-	{Since,_} = cowboy_req:qs_val(<<"since">>, 
-					Req, Sec),
-					
-	Since0 = app_util:to_integer(Since),
-	error_logger:info_msg("~p:get_resource: ~p~n", [?MODULE, Since0]),
-	
-	
-   	case user_presence_srv:list_online_count(Since0) of
+	Since0 = get_last_querytime(Req, Sec),
+  	case user_presence_srv:list_online_count(Since0) of
 		{ok, Count} -> 
 						 DataModel = State#state.data_model,
 						 Count1 = erlang:integer_to_binary(Count),
@@ -105,6 +99,15 @@ fail(Req, State = #state{data = Error}) when is_binary(Error)->
 fail(Req, Error, State) ->
 	{ok, Req1} = get_response_body(Error, Req),
 	{halt, Req1, State}.
+
+get_last_querytime(Req, Sec)->
+	{Since,_} = cowboy_req:qs_val(<<"since">>, 
+					Req, Sec),			
+	Since0 = app_util:to_integer(Since),
+	error_logger:info_msg("~p:get_last_querytime: ~p~n",
+		 [?MODULE, Since0]),
+	Since0.
+
 	
 get_response_meta()->
 	[

@@ -81,20 +81,23 @@ sync_session_from_cluster()->
   gen_server:call(?SERVER, sync_session_from_cluster).
 
 list_online(UserId) ->
+	error_logger:info_msg("~p:list_online ~n", [?MODULE]),
 	gen_server:call(?SERVER,{list_online, UserId}).
 
 list_all_online(Since) ->
-    
 	list_all_online(call, Since).
 
 list_all_online(Type, Since) when is_function(Type) ->
+	error_logger:info_msg("~p:list_all_online ~n", [?MODULE]),
 	gen_server:Type(?SERVER,{list_all_count, Since}).
 
 list_online_count(Since)->
+    error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
 	list_online_count(call, Since).
 
-list_online_count(Type, Since) when is_function(Type) ->
-	gen_server:Type(?SERVER,{list_online_count, Since}).
+list_online_count(Type, Since) when is_atom(Type)->
+    error_logger:info_msg("~p:list_online_count/2 ~n", [?MODULE]),
+	gen_server:Type(?SERVER, {list_online_count, Since}).
 
 handle_call({list_online, UserId}, _From, State)->
   %OnlineUsers = user_with_active_session(UserId),
@@ -112,6 +115,8 @@ handle_call({list_all_count, Since}, _From, State)->
   {reply, Reply, State};
 
 handle_call({list_online_count, Since}, _From, State)->
+  error_logger:info_msg("~p:handle_call list_online since:~p~n",
+  	[?SERVER, Since]),
   Reply= get_active_users_count(),
   {ok, Reply, State};
 
