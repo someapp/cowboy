@@ -66,7 +66,8 @@ get_resource(Req, State)->
 						 encode_response(DataModel, Count1);
 						 
 		{error, Reason} -> fail(Req, 
-								State#state{ data = []});
+								State#state{data = 
+									app_util:ensure_binary(Reason)});
 		E -> fail(Req, {error, E})
 	end.
 
@@ -92,6 +93,7 @@ encode_response(Encoder, Count) ->
 
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
+	error_logger:info_msg("Fail with error: ~p~n", [Error]),
 	fail(Req, Error, State);
 fail(Req, State = #state{data = Error}) when is_binary(Error)->
 	fail(Req, Error, State).

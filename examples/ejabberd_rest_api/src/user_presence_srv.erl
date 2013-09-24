@@ -87,7 +87,7 @@ list_online(UserId) ->
 list_all_online(Since) ->
 	list_all_online(call, Since).
 
-list_all_online(Type, Since) when is_function(Type) ->
+list_all_online(Type, Since) when is_atom(Type) ->
 	error_logger:info_msg("~p:list_all_online ~n", [?MODULE]),
 	gen_server:Type(?SERVER,{list_all_count, Since}).
 
@@ -118,11 +118,11 @@ handle_call({list_online_count, Since}, _From, State)->
   error_logger:info_msg("~p:handle_call list_online since:~p~n",
   	[?SERVER, Since]),
   Reply= get_active_users_count(),
-  {ok, Reply, State};
+  {reply, Reply, State};
 
 handle_call(sync_session_from_cluster, _From, State)->
   Reply= user_presence_db:join_as_slave(State#state.cluster_master, [session]), 
-  {ok, Reply, State};
+  {reply, Reply, State};
 
 handle_call(ping, _From, State) ->
   {reply, pong, State};
@@ -152,6 +152,8 @@ handle_info({query_all_online}, State)->
   {noreply, State};
 
 handle_info({list_all_online, Start}, State)->
+  error_logger:info_msg("~p:handle_info(list_all_online) since:~p~n",
+				[?SERVER, Start]),
   Reply = get_active_users_count(),
   error_logger:info_msg("Total members online ~p",[Reply]),
   Now = app_util:os_now(),

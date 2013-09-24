@@ -41,7 +41,7 @@ start(normal, Args) ->
 		%,{onresponse, fun error_hook_responder:onresponse_hook/4}
 		,{onresponse, fun error_hook/4}
     ]),
-	Ret = ejabberd_rest_api_sup:start_link(Opts0),
+	Ret = ejabberd_rest_api_sup:start_link(Opts0),	
 	error_logger:info_msg("Start ejabberd api status: ~p~n",
 				 [Ret]),
     %{ok, Ret};
