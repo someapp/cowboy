@@ -9,7 +9,8 @@
 -define(FORWARD1(M, F), F(X) -> M:F(X)).
 -define(FORWARD2(M, F), F(X, Y) -> M:F(X, Y)).
 -define(FORWARD3(M, F), F(X, Y, Z) -> M:F(X, Y, Z)).
--define(ONLINE_STAT, 
+-define(EJAB_H, 'ejabberd_online_data').
+-define(DEBUG_H, 'debug_toppage'). 
 
 
 -spec route_map(list()) -> list().
@@ -45,25 +46,24 @@ route_map(Host, Opts, Handler, _ConfigHosts)->
 	{'_', [{'_', default_handler, Opts }]}
   ]).
 
-get_online_stat_set_handler('ejabberd_online_stat')->
+get_online_stat_set_handler(?EJAB_H)->
 	'ejabberd_online_stat_set_handler';
-get_online_stat_set_handler('debug_toppage')->
+get_online_stat_set_handler(?DEBUG_H)->
 	get_toppage().
 
-get_online_stat_handler('ejabberd_online_stat')->
+get_online_stat_handler(?EJAB_H)->
 	'ejabberd_online_stat_handler';
-get_online_stat_handler('debug_toppage')->
+get_online_stat_handler(?DEBUG_H)->
 	get_toppage().
 
-get_online_user_handler('ejabberd_online_stat')->
+get_online_user_handler(?EJAB_H)->
 	'ejabberd_online_user_handler';
-get_online_user_handler('debug_toppage')->
+get_online_user_handler(?DEBUG_H)->
 	get_toppage().
 
-get_online_user_set_handler('ejabberd_online_stat')->
+get_online_user_set_handler(?EJAB_H)->
 	'ejabberd_online_user_set_handler';
-get_online_user_set_handler('debug_toppage')->
+get_online_user_set_handler(?DEBUG_H)->
 	get_toppage().
-
 
 get_toppage()-> 'toppage_handler'.
