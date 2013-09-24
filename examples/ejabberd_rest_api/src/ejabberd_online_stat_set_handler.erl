@@ -15,7 +15,7 @@
 
 -export([get_resource/2]).
 -include_lib("ejab_api.hrl").
-
+-include_lib("online_stat.hrl").
 
 -record(state, {
 	cluster_head :: atom(),
@@ -101,8 +101,10 @@ content_types_provided(Req, State) ->
 		{{<<"application">>, <<"json">>, []}, get_resource}
 	], Req, State}.	
 
-encode_response(Encoder, Count) ->  
-	Encoder:ensure_binary(Count).
+encode_response(Encoder, Count) ->
+	TimeStamp = app_util:get_printable_timestamp(),
+	Encoder:ensure_binary(#online_stat{count = Count,
+		time_stamp = TimeStamp}).
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
 	error_logger:info_msg("Fail with error: ~p~n", [Error]),

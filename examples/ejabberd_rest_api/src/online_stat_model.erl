@@ -18,5 +18,5 @@ rec(_)-> undefined.
 ensure_binary(#online_stat{} = Value) ->
 	error_logger:info_msg("Encoding online state count to json",[Value]),
     Json = json_rec:to_json(Value, online_stat_model),
-    lists:flatten(jsx:encode(Json));
+    lists:flatten(mochijson2:encode(Json));
 ensure_binary(Val) -> app_util:ensure_binary(Val).

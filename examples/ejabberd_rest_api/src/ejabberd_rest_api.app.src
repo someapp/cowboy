@@ -6,9 +6,11 @@
 	{modules, [
 		app_util, 
 		app_config_util,
+		date_util,
 		error_hook_responder,
 		url_route_map,
-		
+		mochijson2,
+		mochinum,
 		online_user_model,
 		online_user_set_model,
 		online_stat_model,
