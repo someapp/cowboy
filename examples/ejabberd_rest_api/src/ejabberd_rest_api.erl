@@ -69,6 +69,7 @@ ensure_started()->
    % 		goldrush,
     		mnesia, 
     		parse_trans,
+    		jsx,
     		json_rec,
     		ranch,
     		cowlib,

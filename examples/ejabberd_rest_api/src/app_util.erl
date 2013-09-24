@@ -56,7 +56,11 @@ ensure_binary(undefined)-> undefined;
 ensure_binary(Value) when is_binary(Value)->
 	Value;
 ensure_binary(Value) when is_list(Value)->
-	list_to_binary(Value).
+	list_to_binary(Value);
+ensure_binary(Value) when is_integer(Value)->
+	list_to_binary(integer_to_list(Value));
+ensure_binary(Value) when is_atom(Value) ->
+	erlang:atom_to_binary(Value, utf8).
 
 -spec os_now() -> calendar:datetime1970().
 os_now()->

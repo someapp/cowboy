@@ -115,9 +115,11 @@ handle_call({list_all_count, Since}, _From, State)->
   {reply, Reply, State};
 
 handle_call({list_online_count, Since}, _From, State)->
-  error_logger:info_msg("~p:handle_call list_online since:~p~n",
+  error_logger:info_msg("~p:handle_call list_online count since:~p~n",
   	[?SERVER, Since]),
   Reply= get_active_users_count(),
+  error_logger:info_msg("~p:handle_call list_online count: ~p~n",
+  	[?SERVER, Reply]),
   {reply, Reply, State};
 
 handle_call(sync_session_from_cluster, _From, State)->

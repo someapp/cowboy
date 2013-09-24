@@ -55,13 +55,13 @@ get_resource(Req, State)->
 					Req, Sec),
 	Since0 = app_util:to_integer(Since),
 	case user_presence_srv:list_online(Since0) of
+	    {error, Reason} ->
+						  Err = app_util:ensure_binary(Reason), 
+						  fail(Req, 
+								State#state{ data = Err});
 		{ok, Collection} ->
 						 DataModel = State#state.data_model,
 						 encode_response(DataModel, Collection);
-		{error, Reason} ->
-						  Err = erlang:atom_to_binary(Reason), 
-						  fail(Req, 
-								State#state{ data = Err});
 		E -> fail(Req, {error, E})
 	end,
 	ok.

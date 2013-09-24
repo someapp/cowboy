@@ -25,7 +25,7 @@
 	data :: binary()
 }).
 
--define(DATAMODEL, 'online_stat').
+-define(DATAMODEL, 'online_stat_model').
 -define(HANDLER, ?MODULE).
 
 init({tcp, http}, Req, Opts)->
@@ -59,16 +59,23 @@ get_resource(Req, State)->
 	Now = erlang:now(),
 	Sec = calendar:time_to_seconds(Now),
 	Since0 = get_last_querytime(Req, Sec),
-  	case user_presence_srv:list_online_count(Since0) of
-		{ok, Count} -> 
-						 DataModel = State#state.data_model,
-						 Count1 = erlang:integer_to_binary(Count),
-						 encode_response(DataModel, Count1);
-						 
-		{error, Reason} -> fail(Req, 
+	Ret = user_presence_srv:list_online_count(Since0),
+	error_logger:info_msg("List online count: ~p~n",[Ret]),
+  	case Ret of
+		{error, Reason} ->
+				error_logger:info_msg("~p:get_resource error reason ~p",
+							[?MODULE, Reason]), 
+				fail(Req, 
 								State#state{data = 
 									app_util:ensure_binary(Reason)});
-		E -> fail(Req, {error, E})
+		Count when is_integer(Count) -> 
+				error_logger:info_msg("~p Data Model ~p~n",
+							[?MODULE, Count]),
+						 DataModel = State#state.data_model,
+						 Count1 = app_util:ensure_binary(Count),
+						 encode_response(DataModel, Count1);
+		_ -> 0				 
+		%E -> fail(Req, {error, E})
 	end.
 
 
@@ -88,7 +95,7 @@ content_types_provided(Req, State) ->
 		{{<<"application">>, <<"json">>, []}, get_resource}
 	], Req, State}.	
 
-encode_response(Encoder, Count) ->
+encode_response(Encoder, Count) ->  
 	Encoder:ensure_binary(Count).
 
 	
