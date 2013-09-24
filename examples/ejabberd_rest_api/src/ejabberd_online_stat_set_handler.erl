@@ -1,4 +1,4 @@
--module(ejabberd_online_stat_handler).
+-module(ejabberd_online_stat_set_handler).
 %-behaviour(cowboy_rest_handler).
 
 -export([

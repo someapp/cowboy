@@ -54,7 +54,7 @@ stop(_State) ->
 	ok.
 
 get_dispatch(Host)->
-	url_route_map:route_map(Host, [], 'toppage_handler', []).
+	url_route_map:route_map(Host, [], 'debug_toppage', []).
 %	cowboy_router:compile([
 %		{Host, [
 %			{"/[:v1]/online/stat/total/", [{v1, int}], 
