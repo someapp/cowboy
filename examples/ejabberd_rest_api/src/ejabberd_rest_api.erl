@@ -30,27 +30,37 @@ start(normal, Args) ->
     Opts = load_config(CfgOpts),
     Opts0 = lists:concat([Opts,[{start_type, StartType}]]),
 
-    R = ejabberd_rest_api_sup:start_link(Opts0),
-   	Dispatch = url_route_map:route_map(Host, [], [Host]),
+%   	Dispatch = url_route_map:route_map(Host, [], [Host]),
+	Dispatch = get_dispatch(Host),
 	
-   	{ok, Ret} = cowboy:start_http(http, NumberAcceptors, 
+   	{ok, R} = cowboy:start_http(http, NumberAcceptors, 
    		[{port, Port}], 
    		[{compress, true},
    		 {env, [{dispatch, Dispatch}]},		 
    		 {onrequest, fun error_hook_responder:onrequest_hook/1}
-		,{onresponse, fun error_hook_responder:onresponse_hook/4}
+		%,{onresponse, fun error_hook_responder:onresponse_hook/4}
+		,{onresponse, fun error_hook/4}
     ]),
-	
-	%R = ejabberd_rest_api_sup:start_link(Opts),
+	Ret = ejabberd_rest_api_sup:start_link(Opts0),
 	error_logger:info_msg("Start ejabberd api status: ~p~n",
-				 [R]),
-    {ok, Ret};
+				 [Ret]),
+    %{ok, Ret};
+	Ret;
 	
 start(A,B)->
 	{error, {A,B, badarg}}.
 
 stop(_State) ->
 	ok.
+
+get_dispatch(Host)->
+	url_route_map:route_map(Host, [], 'toppage_handler', []).
+%	cowboy_router:compile([
+%		{Host, [
+%			{"/[:v1]/online/stat/total/", [{v1, int}], 
+%				toppage_handler, []}
+%		]}
+%	]).
 
 ensure_started()->
  	%reloader:start(),
@@ -111,3 +121,24 @@ get_config_value(Key,[]) when is_atom(Key) ->
 	end;
 get_config_value(Key, Opt) when is_atom(Key)->
 	proplists:get_value(Key, Opt).
+
+
+error_hook(404, Headers, <<>>, Req) ->
+	{Path, Req2} = cowboy_req:path(Req),
+	Body = ["404 Not Found: \"", Path,
+		"\" is not the path you are looking for.\n"],
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
+	{ok, Req3} = cowboy_req:reply(404, Headers2, Body, Req2),
+	Req3;
+error_hook(Code, Headers, <<>>, Req) when is_integer(Code), Code >= 400 ->
+	Body = ["HTTP Error ", integer_to_list(Code), $\n],
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
+	{ok, Req2} = cowboy_req:reply(Code, Headers2, Body, Req),
+	Req2;
+error_hook(_Code, _Headers, _Body, Req) ->
+	Req.
+
+
+

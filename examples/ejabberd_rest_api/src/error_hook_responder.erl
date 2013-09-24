@@ -6,7 +6,8 @@
 -export([onresponse_hook/3]).
 -export([onresponse_hook/4]).
 %-export([onresponse_hook/6]).
--export([respond/4]).
+%-export([respond/4]).
+-export([error_hook/4]).
 
 onrequest_hook(Req)->
     {Method, Req2} = cowboy_req:method(Req),
@@ -55,40 +56,57 @@ respond(404, Headers, <<>>, Req) ->
 	{Path, Req2} = cowboy_req:path(Req),
 	Body = <<"404 Not Found: \"", Path/binary, "\" is not the path you are looking for.\n">>,
 	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
-		{<<"content-length">>, integer_to_list(byte_size(Body))}),
+		{<<"content-length">>, body_length(Body)}),
 	{ok, Req3} = cowboy_req:reply(404, Headers2, Body, Req2),
 	Req3;
+	
 respond(Code, Headers, <<>>, Req) when is_integer(Code), Code >= 400 ->
 	Body = ["HTTP Error ", integer_to_list(Code), $\n],
 	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
-		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
+		{<<"content-length">>, body_length(Body)}),
 	{ok, Req2} = cowboy_req:reply(Code, Headers2, Body, Req),
 	Req2;
 	
-respond(Code, Headers, _Body, <<>>) ->
-	error_logger:info_msg("Code, Headers, Req: ~p~n", 
-			[Code, Headers, <<>>]),
-	<<>>;     
-     	
-respond(Code, Headers, _Body, Req) ->
-	Body1 = <<"500 Internal Server Error. \n">>,
-	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
-		{<<"content-length">>, integer_to_list(iolist_size(Body1))}),
+respond(Code, Headers, Body, Req) ->
+    Code1 = code_to_bitstring(Code),
+	Body1 = << Code1/binary, <<" Internal Server Error. \n">> /binary >>,
 	
-	error_logger:info_msg("Req: ~p~n", [Req]),			
-		
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, body_length(Body1)}),
+	error_logger:info_msg("Req is: ~p Body Length: ~p~n", 
+			[Req, body_length(Body1)]),			
 	{ok, Req1} = cowboy_req:path(Req),
-     
     error_logger:info_msg("Req1: ~p~n",[Req1]),
-    
-
-	{ok, Req2} = cowboy_req:reply(500, Headers2, Body1, Req1),
+    {ok, Req2} = cowboy_req:reply(500, Headers2, Body1, Req1),
 	Req2.
 
 
 %% +-----------------------------------------------------------------+
 %% | PRIVATE FUNCTIONS                                               |
 %% +-----------------------------------------------------------------+
+%ensure_non_empty_req(<<>>) -> 
+%ensure_non_empty_req(<<"">>) ->
+
+%ensure_non_empty_req(Req) -> Req.
+
+%make_cowboy_req(Req)->
+	
+
+
+code_to_bitstring(Code) when is_integer(Code)->
+	list_to_binary(integer_to_list(Code));
+code_to_bitstring(Code) when is_binary(Code)-> Code;
+code_to_bitstring(Code) when is_list(Code)->
+	list_to_binary(Code);
+code_to_bitstring(Code) -> {error, badarg}.
+
+body_length(<<>>) -> "0";
+body_length(<<"">>) -> "0";
+body_length(Body) when is_binary(Body)->
+	integer_to_list(iolist_size(Body));
+body_length(Body) when is_list(Body)->
+	integer_to_list(iolist_size(Body)).
+
 
 params_to_string(Params) ->
     case to_string(Params) of
@@ -128,3 +146,26 @@ list_to_string([], Result) ->
     lists:reverse(Result);
 list_to_string([Head| Rest], Result) ->
     list_to_string(Rest, [to_string(Head)|Result]).
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+error_hook(404, Headers, <<>>, Req) ->
+	{Path, Req2} = cowboy_req:path(Req),
+	Body = ["404 Not Found: \"", Path,
+		"\" is not the path you are looking for.\n"],
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
+	{ok, Req3} = cowboy_req:reply(404, Headers2, Body, Req2),
+	Req3;
+error_hook(Code, Headers, <<>>, Req) when is_integer(Code), Code >= 400 ->
+	Body = ["HTTP Error ", integer_to_list(Code), $\n],
+	Headers2 = lists:keyreplace(<<"content-length">>, 1, Headers,
+		{<<"content-length">>, integer_to_list(iolist_size(Body))}),
+	{ok, Req2} = cowboy_req:reply(Code, Headers2, Body, Req),
+	Req2;
+error_hook(_Code, _Headers, _Body, Req) ->
+	Req.
+    
+    
+    
+    
+
