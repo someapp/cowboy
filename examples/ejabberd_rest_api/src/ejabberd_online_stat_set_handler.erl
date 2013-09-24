@@ -67,18 +67,24 @@ get_resource(Req, State)->
 							[?MODULE, Reason]), 
 				fail(Req, 
 								State#state{data = 
-									app_util:ensure_binary(Reason)});
+									app_util:ensure_binary(Reason)}),
+				get_response_body({error, Reason}, Req);
 		Count when is_integer(Count) -> 
 				error_logger:info_msg("~p Data Model ~p~n",
 							[?MODULE, Count]),
 						 DataModel = State#state.data_model,
 						 Count1 = app_util:ensure_binary(Count),
-						 encode_response(DataModel, Count1);
-		_ -> 0				 
+			
+						 Rsp = encode_response(DataModel, Count1),
+				error_logger:info_msg("~p: json response: ~p~n",
+							[?MODULE, Rsp]),
+		 				 get_response_body(200, Rsp, Req);
+		_ -> 
+			error_logger:info_msg("~p:get_resource Unknown Error ~n",
+				[?MODULE]),
+			get_response_body({error, unknown_error}, Req)
 		%E -> fail(Req, {error, E})
 	end.
-
-
 
 options(Req, State)->
 	Allowed = erlang:list_to_binary(State#state.method_supported),
@@ -97,7 +103,6 @@ content_types_provided(Req, State) ->
 
 encode_response(Encoder, Count) ->  
 	Encoder:ensure_binary(Count).
-
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
 	error_logger:info_msg("Fail with error: ~p~n", [Error]),
@@ -173,7 +178,7 @@ get_response_body({error, Unknown}, Req)->
 	Unknown1 = erlang:atom_to_binary(Unknown),
 	get_response_body(500, Unknown1, Req).
 				 	 
-get_response_body(Code, Error, Req)->
-	cowboy_req:reply(500, get_response_meta(),
-				 	 jsx:encode(Error),
+get_response_body(Code, Body, Req)->
+	cowboy_req:reply(Code, get_response_meta(),
+				 	 jsx:encode(Body),
 				 	 Req).					 	 
