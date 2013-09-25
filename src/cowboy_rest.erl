@@ -39,7 +39,7 @@
 	content_type_a :: undefined
 		| {binary() | {binary(), binary(), [{binary(), binary()}] | '*'},
 			atom()},
-
+[{file,"src/cowboy_rest.erl"},{line,857
 	%% Language.
 	languages_p = [] :: [binary()],
 	language_a :: undefined | binary(),
@@ -56,7 +56,7 @@
 	last_modified :: undefined | no_call | calendar:datetime(),
 	expires :: undefined | no_call | calendar:datetime()
 }).
-
+[{file,"src/cowboy_rest.erl"},{line,857
 %% @doc Upgrade a HTTP request to the REST protocol.
 %%
 %% You do not need to call this function manually. To upgrade to the REST

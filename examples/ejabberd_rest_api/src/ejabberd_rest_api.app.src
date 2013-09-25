@@ -46,6 +46,7 @@
 		cowboy,
 		jsx,
 		meta,
+		iso8601,
 		jsonrec,
 		json_rec,
 		mimetypes,

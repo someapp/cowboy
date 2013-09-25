@@ -113,9 +113,10 @@ encode_response(Encoder, Count) ->
 	{error, badarg}.
 
 encode_response2(Encoder, Count)->
-	TimeStamp = app_util:get_printable_timestamp(),
+	TimeStamp = iso8601:format(now()),
+	TimeStamp1 = binary_to_list(TimeStamp),
 	Encoder:encode(#online_stat{count = Count,
-		time_stamp = TimeStamp}).		
+		time_stamp = TimeStamp1}).		
 			
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
@@ -188,15 +189,21 @@ get_response_body({error, index_exists} , Req)->
 get_response_body({error, bad_type}, Req)->
 	get_response_body(400, <<"bad_type">> , Req);
 
-get_response_body({error, Unknown}, Req)->
+get_response_body({error, Unknown}, Req) when is_atom(Unknown) ->
 	Unknown1 = erlang:atom_to_binary(Unknown),
-	get_response_body(500, Unknown1, Req).
+	get_response_body(500, Unknown1, Req);
+	
+get_response_body({error, _}, Req)  ->
+	get_response_body(500, 
+			erlang:atom_to_binary(unknown_error), Req).
 
 get_response_body(Code, {json_encoded, Body}, Req)->
-		cowboy_req:reply(Code, get_response_meta(),
-				 	 Body, Req);	
+	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
+				 	 Body, Req);
+	%	cowboy_req:body(Req1);	
 				 	 
 get_response_body(Code, Body, Req)->
-	cowboy_req:reply(Code, get_response_meta(),
-				 	 jsx:encode(Body),
-				 	 Req).					 	 
+	Body1 = jsx:encode(Body),
+	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
+				 	 Body1, Req).
+	%cowboy_req:body(Req1).					 	 
