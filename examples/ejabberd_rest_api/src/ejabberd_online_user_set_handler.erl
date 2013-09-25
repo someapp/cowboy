@@ -55,7 +55,8 @@ get_resource(Req, State)->
 	{Since,_} = cowboy_req:qs_val(<<"since">>, 
 					Req, Sec),
 	Since0 = app_util:to_integer(Since),
-	case user_presence_srv:list_online(Since0) of
+	
+	Body = case user_presence_srv:list_online(Since0) of
 	    {error, Reason} ->
 						  Err = app_util:ensure_binary(Reason), 
 						  fail(Req, 
@@ -65,7 +66,7 @@ get_resource(Req, State)->
 						 encode_response(DataModel, Collection);
 		E -> fail(Req, {error, E})
 	end,
-	ok.
+	{Body, Req, State}.
 
 options(Req, State)->
 	Allowed = erlang:list_to_binary(State#state.method_supported),

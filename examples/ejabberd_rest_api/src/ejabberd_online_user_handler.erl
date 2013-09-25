@@ -54,7 +54,7 @@ terminate(Reason, Req, State)->
 get_resource(Req, State)->
 	{Jid, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
 	Jid0 = app_util:to_integer(Jid),
-	case user_presence_srv:list_online(Jid0) of
+	Body = case user_presence_srv:list_online(Jid0) of
 		{ok, online} -> 
 						 DataModel = State#state.data_model,
 						 encode_response(DataModel, Jid, <<"online">>);
@@ -66,7 +66,8 @@ get_resource(Req, State)->
 		{error, Reason} -> fail(Req1, 
 								State#state{ data = <<"offline">>});
 		E -> fail(Req, {error, E})
-	end.
+	end,
+	{Body, Req, State}.
 
 
 encode_response(Encoder, Jid, OnlineNow) ->

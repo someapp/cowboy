@@ -20,4 +20,4 @@ terminate(Reason,_,_)->
 
 echo(_, Req) ->
 	%% Method not allowed.
-	cowboy_req:reply(403,<<"socialstream is running">>, Req).
+	cowboy_req:reply(403,[],<<"socialstream is running">>, Req).
