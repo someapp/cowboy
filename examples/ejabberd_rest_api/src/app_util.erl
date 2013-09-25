@@ -69,11 +69,16 @@ os_now()->
 
 -spec get_printable_timestamp() -> string().
 get_printable_timestamp() -> 
+   get_printable_timestamp(string).
+
+get_printable_timestamp(string) -> 
    Seconds = date_util:epoch(),
    {{Year, Month, Day}, {Hour, Min, Sec}} = calendar:gregorian_seconds_to_datetime(Seconds),
-   R = io_lib:fwrite("~2B/~2B/~4..0B ~2B:~2.10.0B:~2.10.0B", [Month, Day, Year, Hour, Min, Sec]),
-   erlang:list_to_binary(R).
-
+   io_lib:fwrite("~2B/~2B/~4..0B ~2B:~2.10.0B:~2.10.0B", [Month, Day, Year, Hour, Min, Sec]);     
+get_printable_timestamp(binary) ->
+   R = get_printable_timestamp(string), 
+   erlang:list_to_binary(R).   
+   
 -spec timespan( calendar:datetime1970(), calendar:datetime1970())-> calendar:datetime1970().
 timespan(A,B)->
   calendar:time_difference(A,B).

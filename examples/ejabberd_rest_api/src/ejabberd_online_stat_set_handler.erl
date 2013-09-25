@@ -73,12 +73,13 @@ get_resource(Req, State)->
 				error_logger:info_msg("~p Data Model ~p~n",
 							[?MODULE, Count]),
 						 DataModel = State#state.data_model,
-						 Count1 = app_util:ensure_binary(Count),
+						 %Count1 = app_util:ensure_binary(Count),
 			
-						 Rsp = encode_response(DataModel, Count1),
+						 Rsp = encode_response(DataModel, Count),
 				error_logger:info_msg("~p: json response: ~p~n",
 							[?MODULE, Rsp]),
-		 				 get_response_body(200, Rsp, Req);
+		 				 get_response_body(200, 
+		 				 		{json_encoded, Rsp}, Req);
 		_ -> 
 			error_logger:info_msg("~p:get_resource Unknown Error ~n",
 				[?MODULE]),
@@ -101,10 +102,21 @@ content_types_provided(Req, State) ->
 		{{<<"application">>, <<"json">>, []}, get_resource}
 	], Req, State}.	
 
+encode_response(Encoder, Count) when is_integer(Count)->
+	Count1 = integer_to_list(Count),
+	encode_response(Encoder, Count1);
+encode_response(Encoder, Count) when is_binary(Count)->
+	encode_response2(Encoder, Count);
+encode_response(Encoder, Count) when is_list(Count)->
+	encode_response2(Encoder,Count);
 encode_response(Encoder, Count) ->
+	{error, badarg}.
+
+encode_response2(Encoder, Count)->
 	TimeStamp = app_util:get_printable_timestamp(),
-	Encoder:ensure_binary(#online_stat{count = Count,
-		time_stamp = TimeStamp}).
+	Encoder:encode(#online_stat{count = Count,
+		time_stamp = TimeStamp}).		
+			
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
 	error_logger:info_msg("Fail with error: ~p~n", [Error]),
@@ -179,6 +191,10 @@ get_response_body({error, bad_type}, Req)->
 get_response_body({error, Unknown}, Req)->
 	Unknown1 = erlang:atom_to_binary(Unknown),
 	get_response_body(500, Unknown1, Req).
+
+get_response_body(Code, {json_encoded, Body}, Req)->
+		cowboy_req:reply(Code, get_response_meta(),
+				 	 Body, Req);	
 				 	 
 get_response_body(Code, Body, Req)->
 	cowboy_req:reply(Code, get_response_meta(),
