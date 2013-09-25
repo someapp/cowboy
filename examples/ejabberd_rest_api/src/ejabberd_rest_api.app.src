@@ -15,6 +15,7 @@
 		online_user_model,
 		online_user_set_model,
 		online_stat_model,
+		user_webpresence_model,
 		user_presence_db,
 		user_presence_srv,
 		default_handler,
