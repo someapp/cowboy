@@ -204,9 +204,8 @@ get_response_body(Code, {json_encoded, Body}, Req)->
 	cowboy_req:body(Req1);	
 				 	 
 get_response_body(Code, Body, Req)->
-	Body1 = jsx:encode(Body),
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body1, Req),
+				 	 jsx:encode(Body), Req),
 	cowboy_req:body(Req1).	
 
 get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;

@@ -15,7 +15,7 @@
 
 -export([get_resource/2]).		
 -include_lib("ejab_api.hrl").
-
+-include_lib("online_user.hrl").
 
 -record(state, {
 	cluster_head :: atom(),
@@ -153,9 +153,17 @@ get_response_body({error, bad_type}, Req)->
 get_response_body({error, Unknown}, Req)->
 	Unknown1 = erlang:atom_to_binary(Unknown),
 	get_response_body(500, Unknown1, Req).
+
+get_response_body(Code, {json_encoded, Body}, Req)->
+	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
+				 	 Body, Req),
+	cowboy_req:body(Req1);
 				 	 
-get_response_body(Code, Error, Req)->
-	cowboy_req:reply(500, get_response_meta(),
-				 	 jsx:encode(Error),
-				 	 Req).	
-	
+get_response_body(Code, Body, Req)->
+	{ok, Req1} = cowboy_req:reply(500, get_response_meta(),
+				 	 jsx:encode(Body),
+				 	 Req),
+	cowboy_req:body(Req1).				 	
+
+get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
+get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).	
