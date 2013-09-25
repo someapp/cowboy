@@ -56,7 +56,7 @@ get_resource(Req, State)->
 					Req, Sec),
 	Since0 = app_util:to_integer(Since),
 	
-	Body = case user_presence_srv:list_online(Since0) of
+	Body = case user_presence_srv:list_all_online(Since0) of
 	    {error, Reason} ->
 						  Err = app_util:ensure_binary(Reason), 
 						  fail(Req, 
@@ -66,6 +66,8 @@ get_resource(Req, State)->
 						 encode_response(DataModel, Collection);
 		E -> fail(Req, {error, E})
 	end,
+	
+	
 	{Body, Req, State}.
 
 options(Req, State)->
@@ -92,12 +94,13 @@ encode_response(Encoder, Collection)
 	{Count, Jids} = get_collection_data(Collection),
 	
 	TimeStamp = iso8601:format(now()),
-	TimeStamp1 = binary_to_list(TimeStamp),		 
-	
+	TimeStamp1 = app_util:ensure_string(TimeStamp),		 
+	Count0 = app_util:ensure_string(Count),
+	Jids0 = app_util:ensure_string(Jids),
 	Encoder:encode(#online_user_set{
 		count = Count,
 		time_stamp = TimeStamp1,
-		jids = Jids}).
+		jids = Jids0}).
 
 get_collection_data(Collection)->
 	Count = 0,

@@ -2,10 +2,10 @@
 -define(USER_WEBPRESENCE_HRL, true).
 
 -record(user_webpresence, {
-	memberId :: string(),
+	jid :: string(),
 %	brandId :: string(),
 	presence :: string(),
-	token :: string()
+	time_stamp :: string()
 }).
 
 -record(social_presence, {

@@ -58,7 +58,7 @@ get_resource(Req, State)->
 	Body = case user_presence_srv:list_online(Jid0) of
 		{ok, Webpresence} -> 
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Webpresence);
+						 encode_response(DataModel, Jid0, Webpresence);
 						 
 						 
 		{error, Reason} -> fail(Req1, 
@@ -72,10 +72,15 @@ get_userId(Jid)->
 	{U, S}.
 	%app_util:to_integer(U).
 
-encode_response(Encoder, Body) ->
-	Encoder:encode(Body).
-
-
+encode_response(Encoder, Jid, Online) ->
+	TimeStamp = iso8601:format(now()),
+	TimeStamp1 = app_util:ensure_string(TimeStamp),
+	Online0 = app_util:ensure_string(Online),
+	%{LUser0, Server} =  get_userId(Jid),
+	Encoder:encode(#user_webpresence{ jid = app_util:ensure_string(Jid), 
+  			 presence = Online0,
+  			 time_stamp = TimeStamp1}).			 
+	
 options(Req, State)->
 	Allowed = erlang:list_to_binary(State#state.method_supported),
     cowboy_req:set_resp_header(<<"allow">>, Allowed, Req).

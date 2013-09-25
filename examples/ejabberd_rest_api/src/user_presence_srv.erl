@@ -21,6 +21,7 @@
 
 -include_lib("ejab_api.hrl").
 -include_lib("user_webpresence.hrl").
+%-include_lib("online_user_set.hrl").
 
 -define(SERVER, ?MODULE).
 -define(COPY_TYPE, disc_copies).
@@ -100,29 +101,16 @@ list_online_count(Type, Since) when is_atom(Type)->
 	gen_server:Type(?SERVER, {list_online_count, Since}).
 
 handle_call({list_online, UserId}, _From, State)->
-  %OnlineUsers = user_with_active_session(UserId),
   {LUser, LServer} = get_server_name(UserId),
   error_logger:info_msg("Query against server: ~p~n",[LServer]),
   Online = check_if_user_with_active_session(LUser, LServer),
-  LUser0 = app_util:ensure_string(LUser),
-  Online0 = app_util:ensure_string(Online),
-  Token = app_util:ensure_string(generate_token()),
-  error_logger:info_msg("~p:list_online userid: ~p~n",
-  				[?MODULE, LUser0]),
-  error_logger:info_msg("~p:list_online Online status: ~p~n",
-  				[?MODULE, Online0]),
-  error_logger:info_msg("~p:list_online Token: ~p~n",
-  				[?MODULE, Token]),
-  WebPresence = #user_webpresence{ memberId = LUser0, 
-			 presence = Online0,
-			 token = Token}, 
-
   error_logger:info_msg("~p:list_online json response: ~p~n",
-  		[?MODULE, WebPresence]),
-  {reply, {ok, WebPresence}, State};
+  		[?MODULE, app_util:ensure_string(Online)]),
+  {reply, {ok, Online}, State};
 
 handle_call({list_all_count, Since}, _From, State)->
   OnlineUsers = all_users_with_active_session(Since),
+  error_logger:info_msg("~p:list_all_count: ~p~n",[OnlineUsers]),
   Reply = transform(OnlineUsers),
   {reply, Reply, State};
 
@@ -297,18 +285,25 @@ user_with_active_session(Jid, Since) ->
   end.
 
 all_users_with_active_session(Since) ->
-   all_users_with_active_session(session, Since).
+   try
+	   F = all_users_with_active_session(session, Since),
+   	   mnesia:transaction(F)
+   catch _Class:_Reason ->
+   		[]
+   end.
 
 all_users_with_active_session(Table, Since) ->
   FilterFor = fun(Table)->
     qlc:eval(
-      [X || X <- mnesia:table(Table), X#user_webpresence.token > Since]
+%      [X || X <- mnesia:table(Table), X#user_webpresence.token > Since]
+      [X || X <- mnesia:table(Table)]
     )
   end.
   
 transform(nothing) ->[];
 transform([]) -> [];
 transform(OnlineUsers) ->
+  error_logger:info_msg("Transform onlineusers set:~p~n",[OnlineUsers]),
   OnlineUsers.
 
 dirty_get_us_list() ->
