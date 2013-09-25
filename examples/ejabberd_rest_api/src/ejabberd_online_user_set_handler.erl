@@ -15,6 +15,7 @@
 
 -export([get_resource/2]).
 -include_lib("ejab_api.hrl").
+-include_lib("online_user_set.hrl").
 
 -record(state, {
 	cluster_head :: atom(),
@@ -86,8 +87,22 @@ encode_response(Encoder, []) when is_atom(Encoder)->
 	Encoder:ensure_binary(<<"">>);
 encode_response(Encoder, Collection) 
 				when is_atom(Encoder),
-					 is_list(Collection)->				 
-	Encoder:ensure_binary(Collection).
+					 is_list(Collection)->	
+	{Count, Jids} = get_collection_data(Collection),
+	
+	TimeStamp = iso8601:format(now()),
+	TimeStamp1 = binary_to_list(TimeStamp),		 
+	
+	Encoder:encode(#online_user_set{
+		count = Count,
+		time_stamp = TimeStamp1,
+		jids = Jids}).
+
+get_collection_data(Collection)->
+	Count = 0,
+	JidsList = [],
+	{Count, JidsList}.		
+		
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
 	fail(Req, Error, State);

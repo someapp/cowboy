@@ -61,7 +61,7 @@ get_resource(Req, State)->
 	Since0 = get_last_querytime(Req, Sec),
 	Ret = user_presence_srv:list_online_count(Since0),
 	error_logger:info_msg("List online count: ~p~n",[Ret]),
-  	case Ret of
+  	Body = case Ret of
 		{error, Reason} ->
 				error_logger:info_msg("~p:get_resource error reason ~p",
 							[?MODULE, Reason]), 
@@ -78,14 +78,15 @@ get_resource(Req, State)->
 						 Rsp = encode_response(DataModel, Count),
 				error_logger:info_msg("~p: json response: ~p~n",
 							[?MODULE, Rsp]),
-		 				 get_response_body(200, 
+		 				 get_response_body2(200, 
 		 				 		{json_encoded, Rsp}, Req);
 		_ -> 
 			error_logger:info_msg("~p:get_resource Unknown Error ~n",
 				[?MODULE]),
 			get_response_body({error, unknown_error}, Req)
 		%E -> fail(Req, {error, E})
-	end.
+	end,
+	{Body, Req, State}.
 
 options(Req, State)->
 	Allowed = erlang:list_to_binary(State#state.method_supported),
@@ -199,11 +200,14 @@ get_response_body({error, _}, Req)  ->
 
 get_response_body(Code, {json_encoded, Body}, Req)->
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body, Req);
-	%	cowboy_req:body(Req1);	
+				 	 Body, Req),
+	cowboy_req:body(Req1);	
 				 	 
 get_response_body(Code, Body, Req)->
 	Body1 = jsx:encode(Body),
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body1, Req).
-	%cowboy_req:body(Req1).					 	 
+				 	 Body1, Req),
+	cowboy_req:body(Req1).	
+
+get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
+get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).				 	 
