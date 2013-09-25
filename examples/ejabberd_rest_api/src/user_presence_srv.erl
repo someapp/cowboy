@@ -212,9 +212,13 @@ get_users_with_active_session() ->
 
 check_if_user_with_active_session(Jid, LServer)->
     US = {Jid, LServer},
-    case mnesia:dirty_index_read(session, US, #session.us) of
-	[] -> <<"offline">>;
-	Ss -> <<"online">>
+    try
+	    case mnesia:dirty_index_read(session, US, #session.us) of
+			[] -> <<"offline">>;
+			Ss -> <<"online">>
+    	end
+    catch 
+    	_Class:_Reason -> <<"offline">>
     end.
 
 
