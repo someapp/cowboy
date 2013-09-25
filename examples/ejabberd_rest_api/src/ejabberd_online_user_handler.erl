@@ -150,20 +150,23 @@ get_response_body({error, index_exists} , Req)->
 get_response_body({error, bad_type}, Req)->
 	get_response_body(400, <<"bad_type">> , Req);
 
-get_response_body({error, Unknown}, Req)->
+get_response_body({error, Unknown}, Req) when is_atom(Unknown) ->
 	Unknown1 = erlang:atom_to_binary(Unknown),
-	get_response_body(500, Unknown1, Req).
-
+	get_response_body(500, Unknown1, Req);
+	
+get_response_body({error, _}, Req)  ->
+	get_response_body(500, 
+			erlang:atom_to_binary(unknown_error), Req).
+			
 get_response_body(Code, {json_encoded, Body}, Req)->
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
 				 	 Body, Req),
-	cowboy_req:body(Req1);
+	cowboy_req:body(Req1);	
 				 	 
 get_response_body(Code, Body, Req)->
-	{ok, Req1} = cowboy_req:reply(500, get_response_meta(),
-				 	 jsx:encode(Body),
-				 	 Req),
-	cowboy_req:body(Req1).				 	
+	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
+				 	 jsx:encode(Body), Req),
+	cowboy_req:body(Req1).					 	 
 
 get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
-get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).	
+get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).

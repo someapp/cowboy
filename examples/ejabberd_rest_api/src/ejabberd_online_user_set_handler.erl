@@ -62,18 +62,7 @@ get_resource(Req, State)->
 								State#state{ data = Err});
 		{ok, Collection} ->
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel,get_response_body(Code, {json_encoded, Body}, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body, Req),
-	cowboy_req:body(Req1);	
-				 	 
-get_response_body(Code, Body, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 jsx:encode(Body), Req),
-	cowboy_req:body(Req1).	
-
-get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
-get_response_body2(_Code, Body, _Req)-> jsx:encode(Body). Collection);
+						 encode_response(DataModel, Collection);
 		E -> fail(Req, {error, E})
 	end,
 	ok.
@@ -84,18 +73,7 @@ options(Req, State)->
 	
 allowed_methods(Req, State)->	
 	{[<<"GET">>], Req, State}.
-	get_response_body(Code, {json_encoded, Body}, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body, Req),
-	cowboy_req:body(Req1);	
-				 	 
-get_response_body(Code, Body, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 jsx:encode(Body), Req),
-	cowboy_req:body(Req1).	
-
-get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
-get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).
+	
 known_methods(Req, State)->
  	{State#state.method_supported, Req, State}.
 
@@ -108,18 +86,7 @@ content_types_provided(Req, State) ->
 encode_response(Encoder, []) when is_atom(Encoder)->
 	Encoder:ensure_binary(<<"">>);
 encode_response(Encoder, Collection) 
-				when is_atom(Encoder),get_response_body(Code, {json_encoded, Body}, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 Body, Req),
-	cowboy_req:body(Req1);	
-				 	 
-get_response_body(Code, Body, Req)->
-	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
-				 	 jsx:encode(Body), Req),
-	cowboy_req:body(Req1).	
-
-get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
-get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).
+				when is_atom(Encoder),
 					 is_list(Collection)->	
 	{Count, Jids} = get_collection_data(Collection),
 	
@@ -196,6 +163,14 @@ get_response_body({error, index_exists} , Req)->
 get_response_body({error, bad_type}, Req)->
 	get_response_body(400, << "bad_type" >> , Req);
 
+get_response_body({error, Unknown}, Req) when is_atom(Unknown) ->
+	Unknown1 = erlang:atom_to_binary(Unknown),
+	get_response_body(500, Unknown1, Req);
+	
+get_response_body({error, _}, Req)  ->
+	get_response_body(500, 
+			erlang:atom_to_binary(unknown_error), Req).
+			
 get_response_body(Code, {json_encoded, Body}, Req)->
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
 				 	 Body, Req),
@@ -204,7 +179,7 @@ get_response_body(Code, {json_encoded, Body}, Req)->
 get_response_body(Code, Body, Req)->
 	{ok, Req1} = cowboy_req:reply(Code, get_response_meta(),
 				 	 jsx:encode(Body), Req),
-	cowboy_req:body(Req1).	
+	cowboy_req:body(Req1).					 	 
 
 get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
-get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).					 	 
+get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).
