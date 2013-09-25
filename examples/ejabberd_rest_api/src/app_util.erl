@@ -3,7 +3,9 @@
 -export([start_app/1, stop_app/1]).
 -export([start_apps/1]).
 
--export([ensure_binary/1, ensure_loaded/1]).
+-export([ensure_binary/1,
+		 ensure_string/1, 
+		 ensure_loaded/1]).
 
 -export([is_process_alive/1]).
 
@@ -61,6 +63,9 @@ ensure_binary(Value) when is_integer(Value)->
 	list_to_binary(integer_to_list(Value));
 ensure_binary(Value) when is_atom(Value) ->
 	erlang:atom_to_binary(Value, utf8).
+
+ensure_string(Value) -> 
+	binary_to_list(ensure_binary(Value)).
 
 -spec os_now() -> calendar:datetime1970().
 os_now()->

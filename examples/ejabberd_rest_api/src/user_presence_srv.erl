@@ -104,11 +104,22 @@ handle_call({list_online, UserId}, _From, State)->
   {LUser, LServer} = get_server_name(UserId),
   error_logger:info_msg("Query against server: ~p~n",[LServer]),
   Online = check_if_user_with_active_session(LUser, LServer),
-  WebPresence = #user_webpresence{ memberId = LUser, 
-			 presence = Online,
-			 token = generate_token()}, 
-  Reply = user_webpresence_model:ensure_binary(WebPresence),  
-  {reply, Reply, State};
+  LUser0 = app_util:ensure_string(LUser),
+  Online0 = app_util:ensure_string(Online),
+  Token = app_util:ensure_string(generate_token()),
+  error_logger:info_msg("~p:list_online userid: ~p~n",
+  				[?MODULE, LUser0]),
+  error_logger:info_msg("~p:list_online Online status: ~p~n",
+  				[?MODULE, Online0]),
+  error_logger:info_msg("~p:list_online Token: ~p~n",
+  				[?MODULE, Token]),
+  WebPresence = #user_webpresence{ memberId = LUser0, 
+			 presence = Online0,
+			 token = Token}, 
+
+  error_logger:info_msg("~p:list_online json response: ~p~n",
+  		[?MODULE, WebPresence]),
+  {reply, {ok, WebPresence}, State};
 
 handle_call({list_all_count, Since}, _From, State)->
   OnlineUsers = all_users_with_active_session(Since),

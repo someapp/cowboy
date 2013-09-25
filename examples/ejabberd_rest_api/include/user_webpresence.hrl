@@ -5,7 +5,7 @@
 	memberId :: string(),
 %	brandId :: string(),
 	presence :: string(),
-	token :: integer()
+	token :: string()
 }).
 
 -record(social_presence, {

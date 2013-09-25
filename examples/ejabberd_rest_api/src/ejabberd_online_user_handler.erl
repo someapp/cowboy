@@ -15,7 +15,8 @@
 
 -export([get_resource/2]).		
 -include_lib("ejab_api.hrl").
--include_lib("online_user.hrl").
+
+-include_lib("user_webpresence.hrl").
 
 -record(state, {
 	cluster_head :: atom(),
@@ -25,7 +26,7 @@
 	data :: binary()
 }).
 
--define(DATAMODEL, 'online_user').
+-define(DATAMODEL, 'user_webpresence_model').
 
 
 
@@ -55,13 +56,10 @@ get_resource(Req, State)->
 	{Jid0, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
 	
 	Body = case user_presence_srv:list_online(Jid0) of
-		{ok, online} -> 
+		{ok, Webpresence} -> 
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Jid0, <<"online">>);
+						 encode_response(DataModel, Webpresence);
 						 
-		{ok, offline} -> 
-						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Jid0, <<"offline">>);
 						 
 		{error, Reason} -> fail(Req1, 
 								State#state{ data = <<"offline">>});
@@ -74,8 +72,8 @@ get_userId(Jid)->
 	{U, S}.
 	%app_util:to_integer(U).
 
-encode_response(Encoder, Jid, OnlineNow) ->
-	Encoder:ensure_binary(Jid, OnlineNow).
+encode_response(Encoder, Body) ->
+	Encoder:encode(Body).
 
 
 options(Req, State)->
