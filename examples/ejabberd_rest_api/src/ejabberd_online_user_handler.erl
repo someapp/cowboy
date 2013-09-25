@@ -52,16 +52,16 @@ terminate(Reason, Req, State)->
 	ok.
 	
 get_resource(Req, State)->
-	{Jid, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
-	Jid0 = app_util:to_integer(Jid),
+	{Jid0, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
+	
 	Body = case user_presence_srv:list_online(Jid0) of
 		{ok, online} -> 
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Jid, <<"online">>);
+						 encode_response(DataModel, Jid0, <<"online">>);
 						 
 		{ok, offline} -> 
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Jid, <<"offline">>);
+						 encode_response(DataModel, Jid0, <<"offline">>);
 						 
 		{error, Reason} -> fail(Req1, 
 								State#state{ data = <<"offline">>});
@@ -70,8 +70,9 @@ get_resource(Req, State)->
 	{Body, Req, State}.
 
 get_userId(Jid)->
- 	Jid0 = spark_jid:raw_split_jid(Jid),
-	app_util:to_integer(Jid0).
+ 	{U, S} = spark_jid:raw_split_jid(Jid),
+	{U, S}.
+	%app_util:to_integer(U).
 
 encode_response(Encoder, Jid, OnlineNow) ->
 	Encoder:ensure_binary(Jid, OnlineNow).
