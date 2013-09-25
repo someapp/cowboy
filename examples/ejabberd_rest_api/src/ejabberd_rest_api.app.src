@@ -9,6 +9,7 @@
 		date_util,
 		error_hook_responder,
 		url_route_map,
+		spark_jid,
 		
 %		mochijson2,
 %		mochinum,
@@ -50,6 +51,7 @@
 		iso8601,
 		jsonrec,
 		json_rec,
+		'p1_stringprep',
 		mimetypes,
 		reloader,
 		parse_trans

@@ -102,6 +102,7 @@ list_online_count(Type, Since) when is_atom(Type)->
 handle_call({list_online, UserId}, _From, State)->
   %OnlineUsers = user_with_active_session(UserId),
   LServer = get_server_name(State),
+  error_logger:info_msg("Query against server: ~p~n",[LServer]),
   Online = check_if_user_with_active_session(UserId, LServer),
   WebPresence = #user_webpresence{ memberId = UserId, 
 			 presence = Online,
@@ -310,11 +311,14 @@ update_web_presence(User) ->
   ok.
 
 get_login_data(User)->
-   [<<"">>,<<"">>].
+  [<<"">>,<<"">>].
 
 
-get_server_name(State) ->
-  State#state.environment.
+get_server_name(Jid) ->
+   [] = spark_jid:split_jid(Jid).
+
+%get_server_name(State) ->
+%  State#state.environment.
 
 generate_token() ->
    R = app_util:os_now(),

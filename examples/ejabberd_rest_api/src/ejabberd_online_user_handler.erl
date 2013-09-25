@@ -69,6 +69,9 @@ get_resource(Req, State)->
 	end,
 	{Body, Req, State}.
 
+get_userId(Jid)->
+ 	Jid0 = spark_jid:raw_split_jid(Jid),
+	app_util:to_integer(Jid0).
 
 encode_response(Encoder, Jid, OnlineNow) ->
 	Encoder:ensure_binary(Jid, OnlineNow).

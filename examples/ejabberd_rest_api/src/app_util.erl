@@ -98,6 +98,8 @@ ensure_loaded(_) -> {error, badarg}.
 to_integer(A) when is_integer(A) -> A;
 to_integer(A) when is_binary(A)-> 
 	list_to_integer(binary_to_list(A));
+to_integer(A) when is_list(A)-> 
+	list_to_integer(A);	
 to_integer(A)->
 	error_logger:error_msg("~p:to_integer: ~p wrong type~n",[A]),
 	A.
