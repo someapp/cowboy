@@ -25,7 +25,7 @@
 	data :: binary()
 }).
 
--define(DATAMODEL, 'online_user_set').
+-define(DATAMODEL, 'online_user_set_model').
 
 init({tcp, http}, Req, Opts)->
 	ClusterHead = proplists:get_value(cluster_head, Opts),
@@ -86,26 +86,22 @@ content_types_provided(Req, State) ->
 	], Req, State}.	
 	
 
-encode_response(Encoder, []) when is_atom(Encoder)->
-	Encoder:ensure_binary(<<"">>);
-encode_response(Encoder, Collection) 
-				when is_atom(Encoder),
-					 is_list(Collection)->	
-	{Count, Jids} = get_collection_data(Collection),
-	
+encode_response(Encoder, {_, []}) when is_atom(Encoder)-> 
+    encode_response(Encoder, {0, []});
+encode_response(Encoder, Data) 
+				when is_atom(Encoder)->	
+		
 	TimeStamp = iso8601:format(now()),
-	TimeStamp1 = app_util:ensure_string(TimeStamp),		 
+	TimeStamp1 = app_util:ensure_string(TimeStamp),
+	{Count, Collection} = Data,		 
 	Count0 = app_util:ensure_string(Count),
-	Jids0 = app_util:ensure_string(Jids),
+	%Jids0 = app_util:ensure_string(Collection),
+	error_logger:info_msg("~p: encode_response: Count: ~p List: ~p~n",
+				[?MODULE, Count, Collection]),
 	Encoder:encode(#online_user_set{
-		count = Count,
+		count = Count0,
 		time_stamp = TimeStamp1,
-		jids = Jids0}).
-
-get_collection_data(Collection)->
-	Count = 0,
-	JidsList = [],
-	{Count, JidsList}.		
+		jids = Collection}).
 		
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->

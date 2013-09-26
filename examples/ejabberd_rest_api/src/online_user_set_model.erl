@@ -4,6 +4,7 @@
 
 -export([encode/1, decode/1]).
 encode(#online_user_set{} = Rec) ->
+	error_logger:info_msg("~p:encode ~n", [?MODULE]),
 	?encode_gen(#online_user_set{}, Rec).
 
 decode(Payload) ->

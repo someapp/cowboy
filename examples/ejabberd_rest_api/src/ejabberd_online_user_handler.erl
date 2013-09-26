@@ -54,11 +54,11 @@ terminate(Reason, Req, State)->
 	
 get_resource(Req, State)->
 	{Jid0, Req1} = cowboy_req:qs_val(<<"jid">>, Req),
-	
-	Body = case user_presence_srv:list_online(Jid0) of
+	Jid1 = app_util:ensure_string(Jid0),
+	Body = case user_presence_srv:list_online(Jid1) of
 		{ok, Webpresence} -> 
 						 DataModel = State#state.data_model,
-						 encode_response(DataModel, Jid0, Webpresence);
+						 encode_response(DataModel, Jid1, Webpresence);
 						 
 						 
 		{error, Reason} -> fail(Req1, 

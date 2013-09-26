@@ -58,12 +58,17 @@ ensure_binary(undefined)-> undefined;
 ensure_binary(Value) when is_binary(Value)->
 	Value;
 ensure_binary(Value) when is_list(Value)->
-	list_to_binary(Value);
+	Value0 = lists:flatten(Value),
+	list_to_binary(Value0);
 ensure_binary(Value) when is_integer(Value)->
 	list_to_binary(integer_to_list(Value));
 ensure_binary(Value) when is_atom(Value) ->
 	erlang:atom_to_binary(Value, utf8).
 
+ensure_string(Value) when is_list(Value) ->
+	Value0 = lists:flatten(Value),
+	ensure_string(Value0);
+	 
 ensure_string(Value) -> 
 	binary_to_list(ensure_binary(Value)).
 

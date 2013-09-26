@@ -2,9 +2,11 @@
 -behaviour(gen_server).
 
 -export([list_online/1
+		,list_online_count/0
 	 	,list_online_count/1
 	 	,list_online_count/2
-	 	,list_all_online/1
+	 	,list_all_online/0
+ 	 	,list_all_online/1
 	 	,list_all_online/2
      	,generate_token/0]).
 
@@ -36,8 +38,6 @@
 		last_check
 }).
 
-%-record(session, {sid, usr, us, priority, info}).
-%-record(session_counter, {vhost, count}).
 
 -type state() :: #state{}.
 
@@ -57,8 +57,6 @@ init(Args)->
   ClusterMaster = proplists:get_value(cluster_master, Args),
   Environment = proplists:get_value(environment, Args),
   VHost = proplists:get_value(vhost, Args),
- % erlang:send_after(Interval, self(), {query_all_online}),
- % erlang:send_after(Interval, self(), {list_all_online, Start}),
 
   End = app_util:os_now(),
   error_logger:info_msg("Done Initiation ~p Start ~p End ~p", 
@@ -79,8 +77,11 @@ sync_session_from_cluster()->
   gen_server:call(?SERVER, sync_session_from_cluster).
 
 list_online(UserId) ->
-	error_logger:info_msg("~p:list_online ~n", [?MODULE]),
+	error_logger:info_msg("~p:list_online: ~p~n", [?MODULE, UserId]),
 	gen_server:call(?SERVER,{list_online, UserId}).
+
+list_all_online() ->
+	list_all_online(call, undefined).
 
 list_all_online(Since) ->
 	list_all_online(call, Since).
@@ -88,6 +89,10 @@ list_all_online(Since) ->
 list_all_online(Type, Since) when is_atom(Type) ->
 	error_logger:info_msg("~p:list_all_online ~n", [?MODULE]),
 	gen_server:Type(?SERVER,{list_all_count, Since}).
+
+list_online_count()->
+    error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
+	list_online_count(call, undefined).
 
 list_online_count(Since)->
     error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
@@ -98,28 +103,28 @@ list_online_count(Type, Since) when is_atom(Type)->
 	gen_server:Type(?SERVER, {list_online_count, Since}).
 
 handle_call({list_online, UserId}, _From, State)->
-  {LUser, LServer} = get_server_name(UserId),
-  error_logger:info_msg("Query against server: ~p~n",[LServer]),
-  Online = check_if_user_with_active_session(LUser, LServer),
+  error_logger:info_msg("~p:handle_call list_online ~p~n",
+  		[?MODULE, UserId]),
+  {LUser, LServer} = spark_jid:raw_split_jid(UserId),
+  error_logger:info_msg("~p:list_online: Query against: ~p@~p~n",
+  		[?MODULE, LUser, LServer]),
+  Online = get_sessions(LUser, LServer),
   error_logger:info_msg("~p:list_online json response: ~p~n",
   		[?MODULE, app_util:ensure_string(Online)]),
   {reply, {ok, Online}, State};
 
 handle_call({list_all_count, Since}, _From, State)->
-  %OnlineUsers = all_users_with_active_session(Since),
   VHost = State#state.vhost,
-  OnlineUsers =  list_online_users(VHost),
-  		
- 
+  OnlineUsers =  list_online_users(),
   error_logger:info_msg("~p:list_all_count: ~p~n",
   			[?MODULE, OnlineUsers]),
-  Reply = transform(OnlineUsers),
-  {reply, Reply, State};
+  {reply, {ok, OnlineUsers}, State};
 
 handle_call({list_online_count, Since}, _From, State)->
   error_logger:info_msg("~p:handle_call list_online count since:~p~n",
   	[?SERVER, Since]),
-  Reply= get_active_users_count(),
+  %Reply= get_onlineusers_count(),
+  Reply = unique_count(), 
   error_logger:info_msg("~p:handle_call list_online count: ~p~n",
   	[?SERVER, Reply]),
   {reply, Reply, State};
@@ -179,32 +184,67 @@ terminate(_Reason, _State)->
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
-list_online_users(Host) ->
-    Users = [{S, U} || {U, S, _R} <- get_vh_session_list(Host)],
-    SUsers = lists:usort(Users).
+list_online_users() ->
+    Users = get_sessions(),
+    Count = length(Users),
+    error_logger:info_msg("All online users: ~p~n", [Users]),
+    {Count, Users}.
 
-get_vh_session_list(Server) ->
-    LServer = jlib:nameprep(Server),
-    mnesia:dirty_select(
-      session,
-      [{#session{usr = '$1', _ = '_'},
-	[{'==', {element, 2, '$1'}, LServer}],
-	['$1']}]).
+get_sessions() ->
+   L = get_all_session_list(), 
+   UList = [make_jid(U,S) || {{U, S, _R}, '_', '_' ,'_'} <- L],
+   lists:usort(UList).
 
-get_vh_session_number(Server) ->
-    LServer = jlib:nameprep(Server),
-    Query = mnesia:dirty_select(
-		session_counter,
-		[{#session_counter{vhost = LServer, count = '$1'},
-		  [],
-		  ['$1']}]),
-    case Query of
-	[Count] ->
-	    Count;
-	_ -> 0
-    end.
+get_sessions(VHost) ->
+   L = get_all_session_list(), 
+   UList = [make_jid(U,S) || {{U, S, _R}, '_', '_' ,'_'} <- L, (VHost =:= S)],
+   lists:usort(UList).
 
+get_user_sessions(User, Server) ->
+   L = get_sessions(User, Server),
+   error_logger:info_msg("Get all online users list: ~p. Query for ~p@~p~n", [L, User, Server]), 
+	L.
 
+make_jid(U,S)-> lists:concat([U,"@",S]).
+	
+get_sessions(User, Server) ->
+	error_logger:info_msg("~p:get_sessions: User:~p Server:~p~n",
+		[?MODULE, User, Server]),
+    mnesia:dirty_index_read(session, {User, Server}, #session.us).
+
+get_onlineusers_count()->
+   length(get_sessions()).
+
+get_all_session_list() ->
+	mnesia:activity(async_dirty,
+        fun() ->
+            mnesia:foldl(fun(#session{usr = Usr}, AccIn) ->
+                    [{Usr, '_' , '_', '_'} |AccIn]
+                end,
+                [],
+                session)
+        end).
+
+-spec total_count() -> integer().
+total_count() ->
+    mnesia:table_info(session, size).
+
+-spec unique_count() -> integer().
+unique_count() ->
+    compute_unique(mnesia:dirty_first(session),
+                   sets:new()).
+
+-spec compute_unique(term(), set()) -> integer().
+compute_unique('$end_of_table', Set) ->
+    sets:size(Set);
+compute_unique(Key, Set) ->
+    NewSet = case mnesia:dirty_read(session, Key) of
+                 [Session] ->
+                     sets:add_element(Session#session.us, Set);
+                 _ ->
+                     Set
+             end,
+    compute_unique(mnesia:dirty_next(session, Key), NewSet).
 
 is_not_fresh_connect(Table)-> 
    check_table_exists(Table).
@@ -238,6 +278,7 @@ get_users_with_active_session() ->
       [{#session{us = '$1', _ = '_'},
     [],
     ['$1']}]).
+    
 
 check_if_user_with_active_session(Jid, LServer)->
     US = {Jid, LServer},
@@ -329,7 +370,7 @@ all_users_with_active_session0(Since) ->
 all_users_with_active_session0(Table, Since) ->
   FilterFor = fun(Table)->
     qlc:eval(
-%      [X || X <- mnesia:table(Table), X#user_webpresence.token > Since]
+
       [X || X <- mnesia:table(Table)]
     )
   end.
@@ -361,12 +402,6 @@ update_web_presence(User) ->
 get_login_data(User)->
   [<<"">>,<<"">>].
 
-
-get_server_name(Jid) ->
-   spark_jid:raw_split_jid(Jid).
-
-%get_server_name(State) ->
-%  State#state.environment.
 
 generate_token() ->
    R = app_util:os_now(),

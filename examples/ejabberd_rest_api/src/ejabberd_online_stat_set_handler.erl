@@ -60,7 +60,7 @@ get_resource(Req, State)->
 	Sec = calendar:time_to_seconds(Now),
 	Since0 = get_last_querytime(Req, Sec),
 	Ret = user_presence_srv:list_online_count(Since0),
-	error_logger:info_msg("List online count: ~p~n",[Ret]),
+	error_logger:info_msg("~p: List online count: ~p~n",[?MODULE, Ret]),
   	Body = case Ret of
 		{error, Reason} ->
 				error_logger:info_msg("~p:get_resource error reason ~p",
