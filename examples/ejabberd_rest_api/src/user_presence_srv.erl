@@ -21,7 +21,6 @@
 
 -include_lib("ejab_api.hrl").
 -include_lib("user_webpresence.hrl").
-%-include_lib("online_user_set.hrl").
 
 -define(SERVER, ?MODULE).
 -define(COPY_TYPE, disc_copies).
@@ -110,7 +109,8 @@ handle_call({list_online, UserId}, _From, State)->
 
 handle_call({list_all_count, Since}, _From, State)->
   OnlineUsers = all_users_with_active_session(Since),
-  error_logger:info_msg("~p:list_all_count: ~p~n",[OnlineUsers]),
+  error_logger:info_msg("~p:list_all_count: ~p~n",
+  			[?MODULE, OnlineUsers]),
   Reply = transform(OnlineUsers),
   {reply, Reply, State};
 
@@ -145,7 +145,8 @@ handle_info({query_all_online}, State)->
   %Reply = set_user_webpresence(),
   Cluster = State#state.cluster_master,
   case user_presence_db:reach_node(Cluster) of
-       {ok, reachable} -> error_logger:info_msg("Cluster reachable ~p",[Cluster]),
+       {ok, reachable} -> 
+       		 error_logger:info_msg("Cluster reachable ~p",[Cluster]),
 			 sync_with_cluster(Cluster);
        {error, unreachable} -> error_logger:info_msg("Cluster unreachable ~p",[Cluster])
   end, 
@@ -283,16 +284,20 @@ user_with_active_session(Jid, Since) ->
   	   -> {Jid, online};
   	 _ -> {Jid, not_found}
   end.
-
-all_users_with_active_session(Since) ->
+all_users_with_active_session(Since)->
+   case all_users_with_active_session(Since) of 
+   		{aborted, _} -> [];
+   		L -> L
+   end.
+all_users_with_active_session0(Since) ->
    try
-	   F = all_users_with_active_session(session, Since),
+	   F = all_users_with_active_session0(session, Since),
    	   mnesia:transaction(F)
-   catch _Class:_Reason ->
-   		[]
+   catch 
+   	   C:R -> []
    end.
 
-all_users_with_active_session(Table, Since) ->
+all_users_with_active_session0(Table, Since) ->
   FilterFor = fun(Table)->
     qlc:eval(
 %      [X || X <- mnesia:table(Table), X#user_webpresence.token > Since]
@@ -304,7 +309,10 @@ transform(nothing) ->[];
 transform([]) -> [];
 transform(OnlineUsers) ->
   error_logger:info_msg("Transform onlineusers set:~p~n",[OnlineUsers]),
-  OnlineUsers.
+  lists:map(
+  	fun(X)-> 
+  		app_util:ensure_string(X)
+  	end,OnlineUsers).
 
 dirty_get_us_list() ->
     Users = mnesia:dirty_select(
