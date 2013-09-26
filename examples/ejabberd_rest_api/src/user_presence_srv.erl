@@ -108,7 +108,9 @@ handle_call({list_online, UserId}, _From, State)->
 handle_call({list_all_count, Since}, _From, State)->
   %OnlineUsers = all_users_with_active_session(Since),
   VHost = State#state.vhost,
-  OnlineUsers = list_online_users(VHost),
+  OnlineUsers =  list_online_users(VHost),
+  		
+ 
   error_logger:info_msg("~p:list_all_count: ~p~n",
   			[?MODULE, OnlineUsers]),
   Reply = transform(OnlineUsers),
@@ -332,14 +334,15 @@ all_users_with_active_session0(Table, Since) ->
     )
   end.
   
-transform(nothing) ->[];
-transform([]) -> [];
+transform(nothing) -> {ok, []};
+transform([]) -> {ok, []};
 transform(OnlineUsers) ->
   error_logger:info_msg("Transform onlineusers set:~p~n",[OnlineUsers]),
-  lists:map(
+  Ret = lists:map(
   	fun(X)-> 
   		app_util:ensure_string(X)
-  	end,OnlineUsers).
+  	end,OnlineUsers),
+  {ok, Ret}.
 
 dirty_get_us_list() ->
     Users = mnesia:dirty_select(
