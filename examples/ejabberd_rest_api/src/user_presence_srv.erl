@@ -30,18 +30,14 @@
 
 -record(state,{
         cluster_master,
+        vhost,
 		refresh_interval = -1, 
 		environment = <<"">>,
 		last_check
 }).
 
--record(session, {
-	sid,
-	usr,
-	us,
-	priority,
-	info
-}).
+%-record(session, {sid, usr, us, priority, info}).
+%-record(session_counter, {vhost, count}).
 
 -type state() :: #state{}.
 
@@ -60,6 +56,7 @@ init(Args)->
   Interval = proplists:get_value(refresh_interval, Args), 
   ClusterMaster = proplists:get_value(cluster_master, Args),
   Environment = proplists:get_value(environment, Args),
+  VHost = proplists:get_value(vhost, Args),
  % erlang:send_after(Interval, self(), {query_all_online}),
  % erlang:send_after(Interval, self(), {list_all_online, Start}),
 
@@ -67,6 +64,7 @@ init(Args)->
   error_logger:info_msg("Done Initiation ~p Start ~p End ~p", 
   			 [?SERVER, Start, End]),
   {ok, #state{cluster_master = ClusterMaster, 
+  	   vhost = VHost,
        refresh_interval = Interval,
        environment = Environment,
        last_check=End}}.
@@ -108,7 +106,9 @@ handle_call({list_online, UserId}, _From, State)->
   {reply, {ok, Online}, State};
 
 handle_call({list_all_count, Since}, _From, State)->
-  OnlineUsers = all_users_with_active_session(Since),
+  %OnlineUsers = all_users_with_active_session(Since),
+  VHost = State#state.vhost,
+  OnlineUsers = list_online_users(VHost),
   error_logger:info_msg("~p:list_all_count: ~p~n",
   			[?MODULE, OnlineUsers]),
   Reply = transform(OnlineUsers),
@@ -176,6 +176,33 @@ terminate(_Reason, _State)->
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
+
+list_online_users(Host) ->
+    Users = [{S, U} || {U, S, _R} <- get_vh_session_list(Host)],
+    SUsers = lists:usort(Users).
+
+get_vh_session_list(Server) ->
+    LServer = jlib:nameprep(Server),
+    mnesia:dirty_select(
+      session,
+      [{#session{usr = '$1', _ = '_'},
+	[{'==', {element, 2, '$1'}, LServer}],
+	['$1']}]).
+
+get_vh_session_number(Server) ->
+    LServer = jlib:nameprep(Server),
+    Query = mnesia:dirty_select(
+		session_counter,
+		[{#session_counter{vhost = LServer, count = '$1'},
+		  [],
+		  ['$1']}]),
+    case Query of
+	[Count] ->
+	    Count;
+	_ -> 0
+    end.
+
+
 
 is_not_fresh_connect(Table)-> 
    check_table_exists(Table).
