@@ -110,8 +110,8 @@ handle_call({list_online, UserId}, _From, State)->
   		[?MODULE, LUser, LServer]),
   Online = get_sessions(LUser, LServer),
   error_logger:info_msg("~p:list_online json response: ~p~n",
-  		[?MODULE, app_util:ensure_string(Online)]),
-  {reply, {ok, Online}, State};
+  		[?MODULE, Online]),
+  {reply, Online, State};
 
 handle_call({list_all_count, Since}, _From, State)->
   VHost = State#state.vhost,
@@ -210,7 +210,12 @@ make_jid(U,S)-> lists:concat([U,"@",S]).
 get_sessions(User, Server) ->
 	error_logger:info_msg("~p:get_sessions: User:~p Server:~p~n",
 		[?MODULE, User, Server]),
-    mnesia:dirty_index_read(session, {User, Server}, #session.us).
+	User0 = binary_to_list(User),
+	Server0 = binary_to_list(Server),
+    Ret = mnesia:dirty_index_read(session, {User0, Server0}, #session.us),
+    Ret1 = length(Ret),
+    error_logger:info_msg("~p:get_session: length:~p~n",[?MODULE,Ret1]),
+    {ok, Ret1}.
 
 get_onlineusers_count()->
    length(get_sessions()).

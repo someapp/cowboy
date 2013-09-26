@@ -57,10 +57,10 @@ get_resource(Req, State)->
 	Jid1 = app_util:ensure_string(Jid0),
 	Body = case user_presence_srv:list_online(Jid1) of
 		{ok, Webpresence} -> 
+						 error_logger:info_msg("~p:found user active session? ~p~n",	[?MODULE, Webpresence]),
 						 DataModel = State#state.data_model,
 						 encode_response(DataModel, Jid1, Webpresence);
-						 
-						 
+						 						 
 		{error, Reason} -> fail(Req1, 
 								State#state{ data = <<"offline">>});
 		E -> fail(Req, {error, E})
@@ -75,11 +75,12 @@ get_userId(Jid)->
 encode_response(Encoder, Jid, Online) ->
 	TimeStamp = iso8601:format(now()),
 	TimeStamp1 = app_util:ensure_string(TimeStamp),
-	Online0 = app_util:ensure_string(Online),
-	%{LUser0, Server} =  get_userId(Jid),
-	Encoder:encode(#user_webpresence{ jid = app_util:ensure_string(Jid), 
+	Online0 = is_online(Online),
+	Encoder:encode(#user_webpresence{ jid = Jid, 
   			 presence = Online0,
   			 time_stamp = TimeStamp1}).			 
+is_online(X) when X >= 0 -> "online";
+is_online(_) -> "offline".
 	
 options(Req, State)->
 	Allowed = erlang:list_to_binary(State#state.method_supported),
