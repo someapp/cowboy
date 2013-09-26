@@ -99,6 +99,7 @@ sync_node(Name) ->
 sync_node_session(Name) ->
    gen_server:call(?SERVER, {sync_node_session, Name}).
 
+   
 handle_call(get_cluster_master, _From, State) ->
    Reply = State#state.cluster_master,
    {reply, Reply, State};
@@ -111,18 +112,26 @@ handle_call({reach_node, Name}, _From, State)
 
 handle_call({join_as_slave}, From, State) ->
    Name = State#state.cluster_master,
+   Tabs = State#state.ejab_table,
    handle_call({join_as_slave, Name, []}, From, State); 
 
 handle_call({join_as_slave, Name}, From, State) 
 			when is_atom(Name)->
+   Tabs = State#state.ejab_table,
    handle_call({join_as_slave, Name, []}, From, State); 
 
 handle_call({join_as_slave, Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
+
    {ok, reachable} = is_node_reachable(Name),
-   Reply = prepare_sync(Name, Tabs, State#state.type),
-   error_logger:info_msg("Done with sync from server ~p with status ~p~n",[Name, Reply]),
+   Reply = prepare_sync(Name, State#state.type),
+  
+   error_logger:info_msg("Done with cluster as slave from server ~p with status ~p~n",[Name, Reply]),
+   
+   Reply0 = sync_node_some_tables(Name, Tabs),
+   error_logger:info_msg("Done with sync tables from server ~p with status ~p~n",[Name, Reply0]), 
+  
    NewState = #state{cluster_master= Name, 
 	            reachable = State#state.reachable +1},
 
@@ -167,6 +176,7 @@ handle_call({sync_node_some_tables, Name, Tabs}, _From, State)
 handle_call({sync_node_session_table, Name}, From, State) 
 			when is_atom(Name)->
   handle_call({sync_node_some_tables, Name, [session]}, From, State);
+  
 
 handle_call(stop, _From, State) ->
   Reply = terminate(normal, State),
@@ -231,10 +241,10 @@ sync_node_all_tables(NodeName) ->
 
 sync_node_some_tables(NodeName, Tables) ->
   [{Tb, fun(Tb, Type) -> 
-             {atomic, ok} = mnesia:add_table_copy(Tb, node(), Type),
+            {atomic, ok} = mnesia:add_table_copy(Tb, node(), Type),
              error_logger:info_msg("Added table ~p",[Tb])
         end} 
-   || {Tb, [{NodeName, Type}]} <- [{T, mnesia:table_info(T, where_to_commit)}
+   || {Tb, [{NodeName, Type}]} <- [{T, mnesia:table_info(T, 'where_to_commit')}
    || T <- Tables]],
   ok = mnesia:wait_for_tables(Tables, ?TAB_TIMEOUT), ok.
  
