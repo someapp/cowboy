@@ -66,8 +66,7 @@ ensure_binary(Value) when is_atom(Value) ->
 	erlang:atom_to_binary(Value, utf8).
 
 ensure_string(Value) when is_list(Value) ->
-	Value0 = lists:flatten(Value),
-	ensure_string(Value0);
+	lists:flatten(Value);
 	 
 ensure_string(Value) -> 
 	binary_to_list(ensure_binary(Value)).
