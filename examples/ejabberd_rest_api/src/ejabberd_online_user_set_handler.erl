@@ -63,9 +63,11 @@ terminate(Reason, Req, State)->
 get_resource(Req, State)->
     Now = erlang:now(),
 	Sec = calendar:time_to_seconds(Now),
-	{Since,_} = cowboy_req:qs_val(<<"since">>, 
-					Req, Sec),
-	Since0 = app_util:to_integer(Since),
+	Since0 = get_last_querytime(Req, Sec),
+	Ret = user_presence_srv:list_online_count(Since0),
+	
+	%{Since,_} = cowboy_req:qs_val(<<"since">>, 
+	%				Req, Sec),
 	
 	Body = case user_presence_srv:list_all_online(Since0) of
 	    {error, Reason} ->
@@ -194,3 +196,11 @@ get_response_body(Code, Body, Req)->
 
 get_response_body2(_Code, {json_encoded, Body}, _Req)-> Body;
 get_response_body2(_Code, Body, _Req)-> jsx:encode(Body).
+
+get_last_querytime(Req, Sec)->
+	{Since,_} = cowboy_req:qs_val(<<"since">>, 
+					Req, Sec),			
+	Since0 = app_util:to_integer(Since),
+	error_logger:info_msg("~p:get_last_querytime: ~p~n",
+		 [?MODULE, Since0]),
+	Since0.
