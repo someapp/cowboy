@@ -20,6 +20,7 @@
 		user_presence_db,
 		user_presence_srv,
 		default_handler,
+		ejabberd_websocket_handler,
 		ejabberd_online_stat_set_handler,
 		ejabberd_online_user_handler,
 		ejabberd_online_user_set_handler,

@@ -1,8 +1,11 @@
 -module(ejabberd_default_handler).
+-behaviour(cowboy_http_handler).
 %-behaviour(cowboy_rest_handler).
 
 -export([
 		init/3, 
+		handle/2,
+		terminate/3,
 		rest_init/2, 
 		rest_terminate/2
 ]).
@@ -22,8 +25,14 @@
 
 init({tcp, http}, Req, Opts)->
 	{upgrade, protocol, cowboy_rest, Req, 
-	 #state{
-}}.
+	 #state{}}.
+
+handle(Req, State) ->
+	error_logger:error_msg("~p:~p Req:~p~n",[?MODULE, 404, Req]),
+	{ok, Req2} = cowboy_http_req:reply(404, 
+					fail(Req, {error, no_exists}, State) ),
+	{ok, Req2, State}.
+
 
 rest_init(Req, State)->
 	{ok, Req, State}.
