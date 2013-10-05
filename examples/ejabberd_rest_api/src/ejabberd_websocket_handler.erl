@@ -4,44 +4,27 @@
 
 -export([
 		init/3, 
-		handle/2,
 		terminate/3,
-		websocket_init/2,
+		websocket_init/3,
 		websocket_handle/3, 
 		websocket_info/3,
 		websocket_terminate/3
 ]).
 
--export([
-		allowed_methods/2,
-		known_methods/2,
-		content_types_provided/2
-		]).
-
 
 -record(state, {
-	method_supported :: list(),
-	data :: binary()
+	consumer = [], data = <<"">>
 }).
 
 
 init({tcp, http}, Req, Opts)->
-	{upgrade, protocol, cowboy_rest, Req, 
-	 #state{}}.
+	{upgrade, protocol, cowboy_websocket}.
 
-handle(Req, State) ->
-	error_logger:error_msg("~p:~p Req:~p~n",[?MODULE, 404, Req]),
-	{ok, Req2} = cowboy_http_req:reply(404, 
-					fail(Req, {error, no_exists}, State) ),
-	{ok, Req2, State}.
+websocket_init(TransportName, Req, Opts) ->
+    error_logger:info_msg("~p: Transport ~p Req ~p Opt ~p~n",[?MODULE, TransportName, Req, Opts]),
+	{ok, Req, #state{ consumer = []}}.
 
-
-websocket_init(Req, State)->
-	error_logger:error_msg("~p: Received Req:~p~n",[?MODULE, Req]),
-	Req1 = cowboy_http_req:compact(Req),
-	{ok, Req1, State}.
-
-websocket_handle(Message, Req, State)->
+websocket_handle({text, Msg}, Req, State)->
 	error_logger:error_msg("~p: Received Req:~p~n",
 		[?MODULE, Req]),
 	Payload = <<>>,	
@@ -51,40 +34,34 @@ websocket_handle(Message, Req, State)->
 	error_logger:error_msg("~p: Received Unknown Req:~p~n",
 		[?MODULE, Req]),	
 	{ok, Req, State}.
-	
+
+websocket_info({rabbit, Msg}, Req, State)->
+	error_logger:info_msg("~p: Received Req:~p~n",[?MODULE, Req]),	
+	{ok, {text, Msg},Req, State};
+
+websocket_info({timeout, _Ref, Msg}, Req, State) ->
+	erlang:start_timer(1000, self(), <<"How' you doin'?">>),
+	{reply, {text, Msg}, Req, State};
+
 websocket_info(Info, Req, State)->
 	error_logger:error_msg("~p: Received Req:~p~n",[?MODULE, Req]),	
 	{ok, Req, State, hibernate}.	
 	
 websocket_terminate(Reason, Req, State)->
+	error_logger:info_msg("~p: Terminate :~p~n",
+		[?MODULE, 'spark_rabbit_consumer']),
+%	spark_rabbit_consumer:stop(Reason),	
 	ok.
+
+deserialize(Msg) ->
+	Ret = <<"test">>,
+	Ret.
 	
 terminate(Reason, Req, State)->
 	ok.
 	
-get_resource(Req, State)->
-   fail(Req, State).
-
 encode_response(Encoder, Jid, OnlineNow) ->
 	Encoder:ensure_binary(Jid, OnlineNow).
-
-
-options(Req, State)->
-	Allowed = erlang:list_to_binary(State#state.method_supported),
-    cowboy_req:set_resp_header(<<"allow">>, Allowed, Req).
-	
-	
-allowed_methods(Req, State)->	
-	{[<<"GET">>], Req, State}.
-	
-known_methods(Req, State)->
- 	{State#state.method_supported, Req, State}.
-
-content_types_provided(Req, State) ->
-	{[ 
-		{{<<"application">>, <<"json">>, []}, get_resource}
-	], Req, State}.	
-	
 	
 fail(Req, State = #state{data = Error}) when is_atom(Error)->
 	fail(Req, Error, State);

@@ -12,7 +12,7 @@
 
 -export([
 		allowed_methods/2,
-		known_methods/2,
+
 		content_types_provided/2
 		]).
 
@@ -25,7 +25,12 @@
 
 init({tcp, http}, Req, Opts)->
 	{upgrade, protocol, cowboy_rest, Req, 
-	 #state{}}.
+	 #state{
+	 method_supported = 
+	 		[<<"GET">>, <<"HEAD">>, 
+	 		<<"OPTIONS">>, <<"PUT">>,
+   		    <<"POST">>, <<"DELETE">>]
+	 }}.
 
 handle(Req, State) ->
 	error_logger:error_msg("~p:~p Req:~p~n",[?MODULE, 404, Req]),
