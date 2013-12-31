@@ -2,24 +2,26 @@
 -behaviour(gen_server).
 
 -export([list_online/1
-		,list_online_count/0
-	 	,list_online_count/1
-	 	,list_online_count/2
-	 	,list_all_online/0
- 	 	,list_all_online/1
-	 	,list_all_online/2
-     	,generate_token/0]).
+	 ,log_user_off/2
+	 ,log_user_off/3
+	 ,list_online_count/0
+	 ,list_online_count/1
+	 ,list_online_count/2
+	 ,list_all_online/0
+ 	 ,list_all_online/1
+	 ,list_all_online/2
+     	 ,generate_token/0]).
 
 -export([sync_session_from_cluster/0]).
 
 -export([start_link/1]).
 
 -export([init/1,
-		 handle_call/3,
-		 handle_cast/2,
-		 handle_info/2, 
-		 terminate/2, 
-		 code_change/3]).
+	 handle_call/3,
+	 handle_cast/2,
+	 handle_info/2, 
+	 terminate/2, 
+	 code_change/3]).
 
 -include_lib("ejab_api.hrl").
 -include_lib("user_webpresence.hrl").
@@ -33,9 +35,9 @@
 -record(state,{
         cluster_master,
         vhost,
-		refresh_interval = -1, 
-		environment = <<"">>,
-		last_check
+	refresh_interval = -1, 
+	environment = <<"">>,
+	last_check
 }).
 
 
@@ -76,31 +78,40 @@ stop()->
 sync_session_from_cluster()->
   gen_server:call(?SERVER, sync_session_from_cluster).
 
+log_user_off(UserId, Server)->
+  error_logger:info_msg("~p:log user off User: ~p Server:~p ~n", [?MODULE, UserId, Server]) , 
+  gen_server:call(?SERVER,{log_user_off, UserId, Server}).
+
+log_user_off(UserId, Server, Resource)->
+  error_logger:info_msg("~p:log user off User: ~p Server: ~p Resource:~p ~n",
+	 [?MODULE, UserId, Server, Resource]),  
+  gen_server:call(?SERVER,{log_user_off, UserId, Server, Resource}).
+  
 list_online(UserId) ->
-	error_logger:info_msg("~p:list_online: ~p~n", [?MODULE, UserId]),
-	gen_server:call(?SERVER,{list_online, UserId}).
+  error_logger:info_msg("~p:list_online: ~p~n", [?MODULE, UserId]),
+  gen_server:call(?SERVER,{list_online, UserId}).
 
 list_all_online() ->
-	list_all_online(call, undefined).
+  list_all_online(call, undefined).
 
 list_all_online(Since) ->
-	list_all_online(call, Since).
+  list_all_online(call, Since).
 
 list_all_online(Type, Since) when is_atom(Type) ->
-	error_logger:info_msg("~p:list_all_online ~n", [?MODULE]),
-	gen_server:Type(?SERVER,{list_all_count, Since}).
+  error_logger:info_msg("~p:list_all_online ~n", [?MODULE]),
+  gen_server:Type(?SERVER,{list_all_count, Since}).
 
 list_online_count()->
-    error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
-	list_online_count(call, undefined).
+  error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
+  list_online_count(call, undefined).
 
 list_online_count(Since)->
-    error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
-	list_online_count(call, Since).
+  error_logger:info_msg("~p:list_online_count ~n", [?MODULE]),
+  list_online_count(call, Since).
 
 list_online_count(Type, Since) when is_atom(Type)->
-    error_logger:info_msg("~p:list_online_count/2 ~n", [?MODULE]),
-	gen_server:Type(?SERVER, {list_online_count, Since}).
+  error_logger:info_msg("~p:list_online_count/2 ~n", [?MODULE]),
+  gen_server:Type(?SERVER, {list_online_count, Since}).
 
 handle_call({list_online, UserId}, _From, State)->
   error_logger:info_msg("~p:handle_call list_online ~p~n",
@@ -108,7 +119,7 @@ handle_call({list_online, UserId}, _From, State)->
   {LUser, LServer} = spark_jid:raw_split_jid(UserId),
   error_logger:info_msg("~p:list_online: Query against: ~p@~p~n",
   		[?MODULE, LUser, LServer]),
-  Online = get_sessions(LUser, LServer),
+  Online = get_all_sessions(LUser, LServer),
   error_logger:info_msg("~p:list_online json response: ~p~n",
   		[?MODULE, Online]),
   {reply, Online, State};
@@ -185,54 +196,86 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 list_online_users() ->
-    Users = get_sessions(),
+    Users = get_all_sessions(),
     Count = length(Users),
     error_logger:info_msg("All online users: ~p~n", [Users]),
     {Count, Users}.
 
-get_sessions() ->
+get_all_sessions() ->
    L = get_all_session_list(), 
    UList = [make_jid(U,S) || {{U, S, _R}, '_', '_' ,'_'} <- L],
    lists:usort(UList).
 
-get_sessions(VHost) ->
+get_all_sessions(VHost) ->
    L = get_all_session_list(), 
    UList = [make_jid(U,S) || {{U, S, _R}, '_', '_' ,'_'} <- L, (VHost =:= S)],
    lists:usort(UList).
 
 get_user_sessions(User, Server) ->
-   L = get_sessions(User, Server),
+   L = get_all_sessions(User, Server),
    error_logger:info_msg("Get all online users list: ~p. Query for ~p@~p~n", [L, User, Server]), 
 	L.
 
 make_jid(U,S)-> lists:concat([U,"@",S]).
 	
-get_sessions(User, Server) ->
-	error_logger:info_msg("~p:get_sessions: User:~p Server:~p~n",
+get_all_sessions(User, Server) ->
+   error_logger:info_msg("~p:get_all_sessions: User:~p Server:~p~n",
 		[?MODULE, User, Server]),
-	User0 = binary_to_list(User),
-	Server0 = binary_to_list(Server),
-    Ret = mnesia:dirty_index_read(session, {User0, Server0}, #session.us),
-    Ret1 = length(Ret),
-    error_logger:info_msg("~p:get_session: length:~p~n",[?MODULE,Ret1]),
-    {ok, Ret1}.
+   User0 = binary_to_list(User),
+   Server0 = binary_to_list(Server),
+   Ret = mnesia:dirty_index_read(session, {User0, Server0}, #session.us),
+   Ret1 = length(Ret),
+   error_logger:info_msg("~p:get_session: length:~p~n",[?MODULE,Ret1]),
+   {ok, Ret1}.
 
 get_onlineusers_count()->
-   length(get_sessions()).
+   length(get_all_sessions()).
 
 get_all_session_list() ->
-	mnesia:activity(async_dirty,
-        fun() ->
+   mnesia:activity(async_dirty,
+     fun() ->
             mnesia:foldl(fun(#session{usr = Usr}, AccIn) ->
                     [{Usr, '_' , '_', '_'} |AccIn]
                 end,
                 [],
                 session)
-        end).
+     end).
+
+
+kick_sessions(User, Server, Reason) ->
+  lists:map(
+     fun(Resource) ->
+         kick_session(User, Server, Resource, Reason)
+     end,
+     get_resources(User, Server)).
+
+kick_session(User, Server, Resource, Reason) ->
+  ejabberd_router:route(
+      jlib:make_jid("", "", ""),
+      jlib:make_jid(User, Server, Resource),
+      {xmlelement, "broadcast", [], [{exit, Reason}]}).
+
+get_resources(User, Server) ->
+  lists:map(
+      fun(Session) ->
+         element(3, Session#session.usr)
+      end,
+      get_sessions(User, Server)).
+
+get_sessions(User, Server) ->
+  LUser = jlib:nodeprep(User),
+  LServer = jlib:nameprep(Server),
+  Sessions = mnesia:dirty_index_read(session, {LUser, LServer}, #session.us),
+  true = is_list(Sessions),
+  Sessions.
+
+is_multiple_sessions(User, Server )->
+  Sessions = get_sessions(User,Server),
+  length(Sessions) > 0.	
 
 -spec total_count() -> integer().
 total_count() ->
-    mnesia:table_info(session, size).
+  mnesia:table_info(session, size).
 
 -spec unique_count() -> integer().
 unique_count() ->
