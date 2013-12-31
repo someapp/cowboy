@@ -26,8 +26,8 @@
 -define(SERVER, ?MODULE).
 -define(COPY_TYPE, ram_copies).
 -define(TAB_TIMEOUT, 1000).
--define(INITWAIT0, app_util:get_rand_timeout(2)).
--define(INITWAIT, app_util:get_rand_timeout(5)).
+-define(INITWAIT0, random:uniform(2000)).
+-define(INITWAIT, random:uniform(5000)).
 -define(ConfPath,"priv").
 -define(ConfFile, "spark_ejabberd_cluster.config").
 
@@ -74,9 +74,10 @@ init(Opts)->
 
 start_wireup(Pid, Args)->    
    error_logger:info_msg("~p: start_wireup: sent test message to rabbitmq cluser~n",[?SERVER]),   			 
-    UpstreamNodes = proplists:get_value(cluster_master, Args),
+   UpstreamNodes = proplists:get_value(cluster_master, Args),
     % UpstreamNodes = get_upstreamNodes(Args),
-    erlang:send_after(?INITWAIT0, Pid,
+   {ok, Pid0} = Pid,
+   erlang:send_after(?INITWAIT0, Pid0,
     		 {'ping_upstream_nodes', [UpstreamNodes]}),
    error_logger:info_msg("~p: start_wireup: pinging upstream nodes :~p~n",
     	[?SERVER, UpstreamNodes]).
@@ -228,13 +229,24 @@ handle_cast(Info, State) ->
   {noreply, State}.
 
 -spec handle_info(tuple(), state()) -> {ok, state()}.
-handle_info(Info, State) ->
-  error_logger:info_msg("Unknown Info message ~p~n",[Info]),
+handle_info({'ping_upstream_nodes', UpstreamNodes}, State) ->
+ 
+  Reply = ping_upstream_nodes(UpstreamNodes),  
+  error_logger:info_msg("Ping Upstream nodes: ~p Result: ~p~n",[UpstreamNodes, Reply]),
+  {noreply, State};
+handle_info(Request, State)->
+  error_logger:warn_msg("Unknown request ~p~n",[Request]),
   {noreply, State}.
 
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
 handle_info(stop, _From, State)->
   terminate(normal, State);
+handle_info({'ping_upstream_nodes', UpstreamNodes}, _From, State) ->
+ 
+  Reply = ping_upstream_nodes(UpstreamNodes),  
+  error_logger:info_msg("Ping Upstream nodes: ~p Result: ~p~n",[UpstreamNodes, Reply]),
+  {noreply, State};
+
 handle_info(Request, _From, State)->
   error_logger:warn_msg("Unknown request ~p~n",[Request]),
   {noreply, State}.

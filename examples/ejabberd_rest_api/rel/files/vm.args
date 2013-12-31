@@ -1,14 +1,13 @@
 ## Name of the node
--name socialstream@192.168.3.200
-
-## Inet 
--kernel inetrc '"./priv/inetrc"'
+-name ejabberdrestapi@chat64.ejabberddev.localdomain
 
 ## Cookie for distributed erlang
--setcookie 'ERLANG' 
+-setcookie 'ERLANG'
 
--mnesia dir '"./database"' 
-        
+-kernel inetrc '"./priv/inetrc"'
+
+-mnesid dir '"./database"'
+
 ## Heartbeat management; auto-restarts VM if it dies or becomes unresponsive
 ## (Disabled by default..use with caution!)
 ##-heart
@@ -22,11 +21,5 @@
 
 ## Tweak GC to run more often
 -env ERL_FULLSWEEP_AFTER 10
-
 -pa deps/*/ebin
-
-
-
-
-
 
