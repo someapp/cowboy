@@ -2,22 +2,23 @@
 -behaviour(gen_server).
 
 -export([reach_node/1, 
-		 get_cluster_master/0,
-		 join/1, join/2,
-		 join_as_slave/0,
+	 get_cluster_master/0,
+	 join/1, join/2,
+	 join_as_slave/0,
      	 join_as_master/1,
-		 sync_node/1
-		]).
+	 sync_node/1
+]).
 
 -export([start/1, stop/0]).
 -export([start_link/1]).
 
 -export([init/1, 
-		handle_call/3,
-		handle_cast/2,
-		handle_info/2,
-		code_change/3,
-		terminate/2]).
+	handle_call/3,
+	handle_cast/2,
+	handle_info/2,
+	code_change/3,
+	terminate/2
+]).
 
 -include_lib("user_webpresence.hrl").
 -include_lib("ejab_api.hrl").
@@ -25,6 +26,8 @@
 -define(SERVER, ?MODULE).
 -define(COPY_TYPE, ram_copies).
 -define(TAB_TIMEOUT, 1000).
+-define(INITWAIT0, app_util:get_rand_timeout(2)).
+-define(INITWAIT, app_util:get_rand_timeout(5)).
 -define(ConfPath,"priv").
 -define(ConfFile, "spark_ejabberd_cluster.config").
 
@@ -41,9 +44,10 @@
 start_link(Args)->
   error_logger:info_msg("[~p] Start link with Args: ~p~n ",
   			 [?SERVER, Args]),
-  R = gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]),
+  Pid = gen_server:start_link({local, ?SERVER}, ?MODULE, Args ,[]),
+  R = start_wireup(Pid, Args),
   error_logger:info_msg("~p started with pid ~p~n",[?SERVER, R]),
-  R.
+  Pid.
   
 start(Args) -> 
 	start_link(Args).
@@ -66,6 +70,31 @@ init(Opts)->
   		ejab_table = Tables,
   		reachable = 0}
   }.
+
+
+start_wireup(Pid, Args)->    
+   error_logger:info_msg("~p: start_wireup: sent test message to rabbitmq cluser~n",[?SERVER]),   			 
+    UpstreamNodes = proplists:get_value(cluster_master, Args),
+    % UpstreamNodes = get_upstreamNodes(Args),
+    erlang:send_after(?INITWAIT0, Pid,
+    		 {'ping_upstream_nodes', [UpstreamNodes]}),
+   error_logger:info_msg("~p: start_wireup: pinging upstream nodes :~p~n",
+    	[?SERVER, UpstreamNodes]).
+
+ping_upstream_nodes([]) -> ok;
+ping_upstream_nodes(UpstreamNodes) ->
+   error_logger:info_msg("[~p]: Going to ping upstreamNodes: ~p~n",
+    		[?SERVER, UpstreamNodes]),
+ 	Ret = [],
+	Ret0 = lists:foldr(
+		fun(Node, Ret)-> 
+		    R = case is_node_reachable(Node) of
+			   {ok, reachable} -> [{Node, reachable}];
+			   _ ->    [{Node, unreachable}]
+		    end
+		    ,lists:append(Ret, R)
+		end, Ret, UpstreamNodes),
+	lists:flatten(Ret0).
 
 
 get_cluster_master()->
@@ -100,27 +129,27 @@ sync_node_session(Name) ->
    gen_server:call(?SERVER, {sync_node_session, Name}).
 
    
-handle_call(get_cluster_master, _From, State) ->
+handle_call('get_cluster_master', _From, State) ->
    Reply = State#state.cluster_master,
    {reply, Reply, State};
 
-handle_call({reach_node, Name}, _From, State) 
+handle_call({'reach_node', Name}, _From, State) 
 		when is_atom(Name) ->
    Reply = is_node_reachable(Name),
    {reply, Reply, State};
 
 
-handle_call({join_as_slave}, From, State) ->
+handle_call({'join_as_slave'}, From, State) ->
    Name = State#state.cluster_master,
    Tabs = State#state.ejab_table,
    handle_call({join_as_slave, Name, []}, From, State); 
 
-handle_call({join_as_slave, Name}, From, State) 
+handle_call({'join_as_slave', Name}, From, State) 
 			when is_atom(Name)->
    Tabs = State#state.ejab_table,
    handle_call({join_as_slave, Name, []}, From, State); 
 
-handle_call({join_as_slave, Name, Tabs}, _From, State)
+handle_call({'join_as_slave', Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
 
@@ -139,7 +168,7 @@ handle_call({join_as_slave, Name, Tabs}, _From, State)
 
 
 
-handle_call({join_as_master, Name}, _From, State)
+handle_call({'join_as_master', Name}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
@@ -151,7 +180,7 @@ handle_call({join_as_master, Name}, _From, State)
    {reply, Reply, NewState}; 
 
 
-handle_call({join_as_master, Name, Tabs}, _From, State)
+handle_call({'join_as_master', Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
    {ok, reachable} = is_node_reachable(Name),
@@ -163,20 +192,27 @@ handle_call({join_as_master, Name, Tabs}, _From, State)
 
    {reply, Reply, NewState}; 
 
-handle_call({sync_node_all, Name}, _From, State) 
+handle_call({'sync_node_all', Name}, _From, State) 
 			when is_atom(Name)->
    Reply = sync_node_all_tables(Name),
    {reply, Reply, State};
 
-handle_call({sync_node_some_tables, Name, Tabs}, _From, State) 
+handle_call({'sync_node_some_tables', Name, Tabs}, _From, State) 
 			when is_atom(Name)->
   Reply = sync_node_some_tables(Name, Tabs),
   {reply, Reply, State};
 
-handle_call({sync_node_session_table, Name}, From, State) 
+handle_call({'sync_node_session_table', Name}, From, State) 
 			when is_atom(Name)->
   handle_call({sync_node_some_tables, Name, [session]}, From, State);
   
+
+handle_call({'ping_upstream_nodes', UpstreamNodes}, 
+	_From, State) ->
+ 
+  Reply = ping_upstream_nodes(UpstreamNodes),  
+  {reply, Reply, State};
+
 
 handle_call(stop, _From, State) ->
   Reply = terminate(normal, State),

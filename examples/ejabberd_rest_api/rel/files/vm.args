@@ -1,5 +1,5 @@
 ## Name of the node
--name socialstream@192.168.4.124
+-name socialstream@192.168.3.200
 
 ## Inet 
 -kernel inetrc '"./priv/inetrc"'
