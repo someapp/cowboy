@@ -77,8 +77,8 @@ start_wireup(Pid, Args)->
    UpstreamNodes = proplists:get_value(cluster_master, Args),
     % UpstreamNodes = get_upstreamNodes(Args),
    {ok, Pid0} = Pid,
-   erlang:send_after(?INITWAIT0, Pid0,
-    		 {'ping_upstream_nodes', [UpstreamNodes]}),
+   erlang:send_after(?INITWAIT0, Pid0,'ping_upstream_nodes'),
+   erlang:send_after(?INITWAIT0, Pid0,'join_as_slave'),
    error_logger:info_msg("~p: start_wireup: pinging upstream nodes :~p~n",
     	[?SERVER, UpstreamNodes]).
 
@@ -129,6 +129,16 @@ sync_node(Name) ->
 sync_node_session(Name) ->
    gen_server:call(?SERVER, {sync_node_session, Name}).
 
+
+join_ejabberd_cluster(Name, Tabs, State) ->
+   {ok, reachable} = is_node_reachable(Name),
+   Reply = prepare_sync(Name, State#state.type),
+  
+   error_logger:info_msg("Done with cluster as slave from server ~p with status ~p~n",[Name, Reply]),
+   
+   Reply0 = sync_node_some_tables(Name, Tabs),
+   error_logger:info_msg("Done with sync tables from server ~p with status ~p~n",[Name, Reply0]),
+   Reply0.
    
 handle_call('get_cluster_master', _From, State) ->
    Reply = State#state.cluster_master,
@@ -153,14 +163,7 @@ handle_call({'join_as_slave', Name}, From, State)
 handle_call({'join_as_slave', Name, Tabs}, _From, State)
 			 when is_atom(Name)->
 
-
-   {ok, reachable} = is_node_reachable(Name),
-   Reply = prepare_sync(Name, State#state.type),
-  
-   error_logger:info_msg("Done with cluster as slave from server ~p with status ~p~n",[Name, Reply]),
-   
-   Reply0 = sync_node_some_tables(Name, Tabs),
-   error_logger:info_msg("Done with sync tables from server ~p with status ~p~n",[Name, Reply0]), 
+   Reply = join_ejabberd_cluster(Name, Tabs, State),
   
    NewState = #state{cluster_master= Name, 
 	            reachable = State#state.reachable +1},
@@ -208,10 +211,10 @@ handle_call({'sync_node_session_table', Name}, From, State)
   handle_call({sync_node_some_tables, Name, [session]}, From, State);
   
 
-handle_call({'ping_upstream_nodes', UpstreamNodes}, 
+handle_call('ping_upstream_nodes', 
 	_From, State) ->
- 
-  Reply = ping_upstream_nodes(UpstreamNodes),  
+  UpstreamNodes = State#state.cluster_master,
+  Reply = ping_upstream_nodes([UpstreamNodes]), 
   {reply, Reply, State};
 
 
@@ -229,11 +232,20 @@ handle_cast(Info, State) ->
   {noreply, State}.
 
 -spec handle_info(tuple(), state()) -> {ok, state()}.
-handle_info({'ping_upstream_nodes', UpstreamNodes}, State) ->
- 
-  Reply = ping_upstream_nodes(UpstreamNodes),  
+handle_info('ping_upstream_nodes', State) ->
+  UpstreamNodes = State#state.cluster_master,
+  Reply = ping_upstream_nodes([UpstreamNodes]), 
   error_logger:info_msg("Ping Upstream nodes: ~p Result: ~p~n",[UpstreamNodes, Reply]),
   {noreply, State};
+
+handle_info('join_as_slave', State) ->
+  Cluster = State#state.cluster_master,
+  Tabs = State#state.ejab_table,
+  error_logger:info_msg("Join Ejabberd Cluster: ~p Tables: ~p~n",[Cluster, Tabs]),
+  Reply = join_ejabberd_cluster(Cluster, Tabs, State),
+  error_logger:info_msg("Join Ejabberd Cluser: ~p Result: ~p~n",[Cluster, Reply]),
+  {noreply, State};
+
 handle_info(Request, State)->
   error_logger:warn_msg("Unknown request ~p~n",[Request]),
   {noreply, State}.
@@ -241,11 +253,21 @@ handle_info(Request, State)->
 -spec handle_info(tuple(), pid(), state()) -> {ok, state()}.
 handle_info(stop, _From, State)->
   terminate(normal, State);
-handle_info({'ping_upstream_nodes', UpstreamNodes}, _From, State) ->
- 
-  Reply = ping_upstream_nodes(UpstreamNodes),  
+handle_info('ping_upstream_nodes', _From, State) ->
+  UpstreamNodes = State#state.cluster_master,
+  Reply = ping_upstream_nodes([UpstreamNodes]),  
   error_logger:info_msg("Ping Upstream nodes: ~p Result: ~p~n",[UpstreamNodes, Reply]),
   {noreply, State};
+
+handle_info('join_as_slave', _From, State) ->
+  Cluster = State#state.cluster_master,
+  Tabs = State#state.ejab_table,
+  error_logger:info_msg("Join Ejabberd Cluster: ~p Tables: ~p~n",[Cluster, Tabs]),
+  Reply = join_ejabberd_cluster(Cluster, Tabs, State),
+  error_logger:info_msg("Join Ejabberd Cluster: ~p Result: ~p~n",[Cluster, Reply]),
+
+  {noreply, State};
+
 
 handle_info(Request, _From, State)->
   error_logger:warn_msg("Unknown request ~p~n",[Request]),
