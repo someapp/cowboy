@@ -26,7 +26,6 @@ BINDIR=$ROOTDIR/erts-$ERTS_VSN/bin
 EMU=beam
 PROGNAME=`echo $0 | sed 's/.*\\///'`
 CMD="$BINDIR/erlexec"
-alias epmd `epmd -d`
 export EMU
 export ROOTDIR
 export BINDIR

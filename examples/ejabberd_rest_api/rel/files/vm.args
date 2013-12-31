@@ -1,6 +1,7 @@
 ## Name of the node
 -name ejabberdrestapi@chat64.ejabberddev.localdomain
 
+-hidden 
 ## Cookie for distributed erlang
 -setcookie 'ERLANG'
 
@@ -22,4 +23,6 @@
 ## Tweak GC to run more often
 -env ERL_FULLSWEEP_AFTER 10
 -pa deps/*/ebin
+
+-remsh ejabberd@chat64.ejabberddev.localdomain
 
